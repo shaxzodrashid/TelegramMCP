@@ -15,10 +15,15 @@ dependencies = [
     "pillow>=12.2.0",
     "pydantic>=2.13.3",
     "pydantic-settings>=2.14.0",
+    "rich>=15.0.0",
     "starlette>=1.0.0",
     "telethon>=1.43.2",
+    "typer>=0.25.1",
     "uvicorn>=0.46.0",
 ]
+
+[project.scripts]
+telegram-mcp = "telegram_mcp.cli:app"
 
 [build-system]
 requires = ["uv_build>=0.10.7,<0.11.0"]
