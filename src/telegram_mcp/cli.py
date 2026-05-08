@@ -35,8 +35,16 @@ def update_env_file(key: str, value: str):
     if not found:
         new_lines.append(f"{key}={value}\n")
     
-    with open(env_path, "w") as f:
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+    mode = 0o600
+    with open(os.open(env_path, flags, mode), "w") as f:
         f.writelines(new_lines)
+
+    # Enforce 0600 in case the file already existed with wider permissions
+    try:
+        os.chmod(env_path, 0o600)
+    except Exception:
+        pass
 
 async def auth_flow():
     console.print(Panel.fit("Telegram Authentication", style="bold blue"))
