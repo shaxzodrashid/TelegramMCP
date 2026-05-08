@@ -1,0 +1,30 @@
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='ALICE', types=None, limit=50, offset=0
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/1 chats in 0.00s
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='technews', types=None, limit=50, offset=0
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/1 chats in 0.00s
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=[<ChatType.channel: 'channel'>], limit=50, offset=0
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/1 chats in 0.00s
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=None, limit=50, offset=0
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 2/2 chats in 0.00s
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=None, limit=50, offset=0
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 3/3 chats in 0.00s
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=None, limit=1, offset=0
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/2 chats in 0.00s
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=None, limit=1, offset=1
+2026-05-08 06:37:02 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/2 chats in 0.00s
+2026-05-08 06:37:02 | INFO     | test_core:test_logger:17 - Testing logger
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='ALICE', types=None, limit=50, offset=0
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/1 chats in 0.00s
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='technews', types=None, limit=50, offset=0
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/1 chats in 0.00s
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=[<ChatType.channel: 'channel'>], limit=50, offset=0
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/1 chats in 0.00s
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=None, limit=50, offset=0
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 2/2 chats in 0.00s
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=None, limit=50, offset=0
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 3/3 chats in 0.00s
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=None, limit=1, offset=0
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/2 chats in 0.00s
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:57 - list_chats request: search='None', types=None, limit=1, offset=1
+2026-05-08 09:59:50 | INFO     | telegram_mcp.service.telegram:list_chats:137 - list_chats success: returned 1/2 chats in 0.00s
+2026-05-08 09:59:50 | INFO     | test_core:test_logger:17 - Testing logger
