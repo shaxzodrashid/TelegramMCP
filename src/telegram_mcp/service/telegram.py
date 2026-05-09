@@ -1,7 +1,6 @@
-import asyncio
 import os
 import time
-from typing import Optional, List
+from typing import Optional
 from telethon import TelegramClient, errors, types
 from ..core.config import settings
 from ..core.logger import logger
@@ -156,7 +155,7 @@ class TelegramService:
             raise
         except Exception as e:
             logger.exception(f"Unexpected error in list_chats: {e}")
-            raise ValueError(f"An unexpected error occurred: {str(e)}")
+            raise ValueError("An unexpected error occurred")
 
     def _map_entity_to_chat_type(self, entity) -> Optional[ChatType]:
         if isinstance(entity, types.User):
