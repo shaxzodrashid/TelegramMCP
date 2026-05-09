@@ -23,7 +23,7 @@ async def get_account_info():
         return f"Logged in as: {me.first_name} (@{me.username or 'N/A'}) [ID: {me.id}]"
     except Exception as e:
         logger.error(f"Error getting account info: {e}")
-        return f"Error: {e}"
+        return "An error occurred while getting account info."
 
 @mcp.tool()
 async def list_chats(
