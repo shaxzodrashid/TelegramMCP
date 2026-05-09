@@ -9,4 +9,4 @@ logs/
 
 # Virtual environments
 .venv
-.env
+.envlogs/
