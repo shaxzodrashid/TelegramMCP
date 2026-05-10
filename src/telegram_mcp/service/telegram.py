@@ -4,7 +4,14 @@ from typing import Optional
 from telethon import TelegramClient, errors, types
 from ..core.config import settings
 from ..core.logger import logger
-from ..models.chats import ListChatsInput, ListChatsResult, ChatSummary, ChatType, ListChatsMeta
+from ..models.chats import (
+    ListChatsInput,
+    ListChatsResult,
+    ChatSummary,
+    ChatType,
+    ListChatsMeta,
+)
+
 
 class TelegramService:
     def __init__(self):
@@ -14,14 +21,18 @@ class TelegramService:
     async def start(self):
         if not self._is_initialized:
             logger.info("Starting Telethon client...")
-            if not settings.API_ID or not settings.API_HASH or settings.API_HASH == "placeholder":
-                logger.error("API_ID or API_HASH is missing. Please check your .env file.")
+            if (
+                not settings.API_ID
+                or not settings.API_HASH
+                or settings.API_HASH == "placeholder"
+            ):
+                logger.error(
+                    "API_ID or API_HASH is missing. Please check your .env file."
+                )
                 raise ValueError("API_ID and API_HASH must be configured.")
-            
+
             self.client = TelegramClient(
-                settings.SESSION_NAME,
-                settings.API_ID,
-                settings.API_HASH
+                settings.SESSION_NAME, settings.API_ID, settings.API_HASH
             )
             await self.client.connect()
 
@@ -36,12 +47,6 @@ class TelegramService:
             self._is_initialized = True
             logger.info("Telethon client connected successfully.")
 
-    async def is_authorized(self):
-        await self.start()
-        if self.client:
-            return await self.client.is_user_authorized()
-        return False
-
     async def get_me(self):
         await self.start()
         if self.client and await self.client.is_user_authorized():
@@ -53,8 +58,10 @@ class TelegramService:
         List Telegram chats/dialogs available to the authenticated user.
         """
         start_time = time.time()
-        logger.info(f"list_chats request: search='{input_data.search}', "
-                    f"types={input_data.type_filters}, limit={input_data.limit}, offset={input_data.offset}")
+        logger.info(
+            f"list_chats request: search='{input_data.search}', "
+            f"types={input_data.type_filters}, limit={input_data.limit}, offset={input_data.offset}"
+        )
 
         try:
             await self.start()
@@ -65,8 +72,10 @@ class TelegramService:
             # Suggested behavior from requirements:
             # internal_fetch_limit = max(300, offset + limit * 3)
             # cap internal_fetch_limit at 1000
-            internal_fetch_limit = min(1000, max(300, input_data.offset + input_data.limit * 3))
-            
+            internal_fetch_limit = min(
+                1000, max(300, input_data.offset + input_data.limit * 3)
+            )
+
             # get_dialogs returns a list of Dialog objects
             dialogs = await self.client.get_dialogs(limit=internal_fetch_limit)
             
@@ -106,24 +115,28 @@ class TelegramService:
 
                 summary = ChatSummary(
                     id=entity.id,
-                    access_hash=getattr(entity, 'access_hash', None),
+                    access_hash=getattr(entity, "access_hash", None),
                     title=title,
                     username=username,
                     type=chat_type,
                     unread_count=dialog.unread_count,
                     is_pinned=dialog.pinned,
-                    is_archived=dialog.archived
+                    is_archived=dialog.archived,
                 )
                 all_summaries.append(summary)
 
             total_filtered = len(all_summaries)
-            
+
             # 6. Apply offset/limit
-            paged_summaries = all_summaries[input_data.offset : input_data.offset + input_data.limit]
+            paged_summaries = all_summaries[
+                input_data.offset : input_data.offset + input_data.limit
+            ]
             has_more = total_filtered > (input_data.offset + input_data.limit)
 
             elapsed_time = time.time() - start_time
-            logger.info(f"list_chats success: returned {len(paged_summaries)}/{total_filtered} chats in {elapsed_time:.2f}s")
+            logger.info(
+                f"list_chats success: returned {len(paged_summaries)}/{total_filtered} chats in {elapsed_time:.2f}s"
+            )
 
             return ListChatsResult(
                 data=paged_summaries,
@@ -133,8 +146,8 @@ class TelegramService:
                     offset=input_data.offset,
                     search=input_data.search,
                     type_filters=input_data.type_filters,
-                    has_more=has_more
-                )
+                    has_more=has_more,
+                ),
             )
 
         except errors.FloodWaitError as e:
@@ -175,7 +188,7 @@ class TelegramService:
             if not title:
                 title = f"User {entity.id}"
             return title
-        elif hasattr(entity, 'title'):
+        elif hasattr(entity, "title"):
             return entity.title or f"Chat {entity.id}"
         return f"Entity {entity.id}"
 
@@ -185,6 +198,7 @@ class TelegramService:
             await self.client.disconnect()
             self._is_initialized = False
             logger.info("Telethon client stopped.")
+
 
 # Singleton instance
 telegram_service = TelegramService()
