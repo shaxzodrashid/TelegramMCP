@@ -1,4 +1,11 @@
+import os
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Set secure umask for the entire process.
+# This prevents Telethon/SQLite from temporarily creating world-readable files
+# (e.g. .session or .session-wal) during initialization.
+os.umask(0o077)
 
 class Settings(BaseSettings):
     # Telegram Credentials
@@ -8,6 +15,13 @@ class Settings(BaseSettings):
     # Session Persistence
     SESSION_NAME: str = "telegram_mcp_session"
     
+    @field_validator("SESSION_NAME")
+    @classmethod
+    def validate_session_name(cls, v: str) -> str:
+        if "/" in v or "\\" in v or ".." in v:
+            raise ValueError("SESSION_NAME must not contain path separators")
+        return v
+
     # Server Settings
     HOST: str = "0.0.0.0"
     PORT: int = 8000
