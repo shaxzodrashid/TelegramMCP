@@ -1,5 +1,6 @@
 import os
 import time
+import asyncio
 from typing import Optional
 from telethon import TelegramClient, errors, types
 from ..core.config import settings
@@ -27,11 +28,14 @@ class TelegramService:
 
             # Enforce secure permissions on the session file
             session_file = f"{settings.SESSION_NAME}.session"
-            if os.path.exists(session_file):
-                try:
-                    os.chmod(session_file, 0o600)
-                except Exception as e:
-                    logger.warning(f"Could not secure session file permissions: {e}")
+            def secure_session_file():
+                if os.path.exists(session_file):
+                    try:
+                        os.chmod(session_file, 0o600)
+                    except Exception as e:
+                        logger.warning(f"Could not secure session file permissions: {e}")
+
+            await asyncio.to_thread(secure_session_file)
 
             self._is_initialized = True
             logger.info("Telethon client connected successfully.")
