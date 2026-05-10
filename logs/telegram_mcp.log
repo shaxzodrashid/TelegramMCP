@@ -43,33 +43,3 @@
 2026-05-09 06:50:58 | INFO     | telegram_mcp.service.telegram:list_chats:56 - list_chats request: search='None', types=None, limit=1, offset=1
 2026-05-09 06:50:58 | INFO     | telegram_mcp.service.telegram:list_chats:136 - list_chats success: returned 1/2 chats in 0.00s
 2026-05-09 06:50:58 | INFO     | test_core:test_logger:17 - Testing logger
-2026-05-10 10:21:01 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:21:01 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:21:01 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:21:01 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:21:01 | ERROR    | telegram_mcp.server:get_account_info:25 - Error getting account info: API Error
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:56 - list_chats request: search='ALICE', types=None, limit=50, offset=0
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:136 - list_chats success: returned 1/1 chats in 0.00s
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:56 - list_chats request: search='technews', types=None, limit=50, offset=0
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:136 - list_chats success: returned 1/1 chats in 0.00s
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:56 - list_chats request: search='None', types=[<ChatType.channel: 'channel'>], limit=50, offset=0
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:136 - list_chats success: returned 1/1 chats in 0.00s
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:56 - list_chats request: search='None', types=None, limit=50, offset=0
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:136 - list_chats success: returned 2/2 chats in 0.00s
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:56 - list_chats request: search='None', types=None, limit=50, offset=0
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:136 - list_chats success: returned 3/3 chats in 0.00s
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:56 - list_chats request: search='None', types=None, limit=1, offset=0
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:136 - list_chats success: returned 1/2 chats in 0.00s
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:56 - list_chats request: search='None', types=None, limit=1, offset=1
-2026-05-10 10:22:29 | INFO     | telegram_mcp.service.telegram:list_chats:136 - list_chats success: returned 1/2 chats in 0.00s
-2026-05-10 10:22:29 | INFO     | test_core:test_logger:17 - Testing logger
-2026-05-10 10:22:29 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:22:29 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:22:29 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:22:29 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:22:29 | ERROR    | telegram_mcp.server:get_account_info:25 - Error getting account info: API Error
-2026-05-10 10:22:46 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:22:46 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:22:46 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:22:46 | INFO     | telegram_mcp.server:get_account_info:18 - Executing get_account_info tool
-2026-05-10 10:22:46 | ERROR    | telegram_mcp.server:get_account_info:25 - Error getting account info: API Error
