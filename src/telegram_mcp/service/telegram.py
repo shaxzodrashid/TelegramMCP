@@ -2,6 +2,7 @@ import os
 import time
 from typing import Optional
 from telethon import TelegramClient, errors, types
+from ..core.cache import AsyncCache
 from ..core.config import settings
 from ..core.logger import logger
 from ..models.chats import ListChatsInput, ListChatsResult, ChatSummary, ChatType, ListChatsMeta
@@ -10,6 +11,7 @@ class TelegramService:
     def __init__(self):
         self.client: Optional[TelegramClient] = None
         self._is_initialized = False
+        self._cache = AsyncCache()
 
     async def start(self):
         if not self._is_initialized:
@@ -45,7 +47,14 @@ class TelegramService:
     async def get_me(self):
         await self.start()
         if self.client and await self.client.is_user_authorized():
-            return await self.client.get_me()
+            cached_me = await self._cache.get("telegram_me")
+            if cached_me is not None:
+                return cached_me
+
+            me = await self.client.get_me()
+            if me is not None:
+                await self._cache.set("telegram_me", me, ttl=300)
+            return me
         return None
 
     async def list_chats(self, input_data: ListChatsInput) -> ListChatsResult:
