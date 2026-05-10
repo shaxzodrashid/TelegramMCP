@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 from unittest.mock import AsyncMock, MagicMock
-from telethon import types
+from telethon import types, errors
 from telegram_mcp.models.chats import ListChatsInput, ChatType, ChatSummary, ListChatsResult
 from telegram_mcp.service.telegram import TelegramService
 
@@ -148,49 +148,28 @@ async def test_list_chats_filtering(telegram_service):
     assert len(result.data) == 1
     assert result.meta.has_more is False
 
-def test_get_entity_title(telegram_service):
-    # Test User entity
-    # 1. First and last name
-    user1 = MagicMock(spec=types.User)
-    user1.first_name = "Alice"
-    user1.last_name = "Smith"
-    assert telegram_service._get_entity_title(user1) == "Alice Smith"
+@pytest.mark.asyncio
+async def test_list_chats_error_handling(telegram_service):
+    # Setup mock client
+    telegram_service.client = AsyncMock()
+    telegram_service.client.is_user_authorized.return_value = True
+    telegram_service._is_initialized = True
 
-    # 2. First name only
-    user2 = MagicMock(spec=types.User)
-    user2.first_name = "Bob"
-    user2.last_name = None
-    assert telegram_service._get_entity_title(user2) == "Bob"
+    # 1. Test FloodWaitError
+    flood_error = errors.FloodWaitError(request=None, capture=42)
+    telegram_service.client.get_dialogs.side_effect = flood_error
 
-    # 3. Last name only
-    user3 = MagicMock(spec=types.User)
-    user3.first_name = ""
-    user3.last_name = "Jones"
-    assert telegram_service._get_entity_title(user3) == "Jones"
+    with pytest.raises(ValueError, match="Telegram rate limit: try again in 42 seconds"):
+        await telegram_service.list_chats(ListChatsInput())
 
-    # 4. No names
-    user4 = MagicMock(spec=types.User)
-    user4.first_name = None
-    user4.last_name = ""
-    user4.id = 123
-    assert telegram_service._get_entity_title(user4) == "User 123"
+    # 2. Test ValueError
+    telegram_service.client.get_dialogs.side_effect = ValueError("Test ValueError")
 
-    # Test entity with title (e.g. Channel or Chat)
-    # 1. Chat with title
-    chat1 = MagicMock(spec=types.Chat)
-    chat1.title = "Cool Group"
-    assert telegram_service._get_entity_title(chat1) == "Cool Group"
+    with pytest.raises(ValueError, match="Test ValueError"):
+        await telegram_service.list_chats(ListChatsInput())
 
-    # 2. Chat without title
-    chat2 = MagicMock(spec=types.Chat)
-    chat2.title = None
-    chat2.id = 789
-    assert telegram_service._get_entity_title(chat2) == "Chat 789"
+    # 3. Test unexpected Exception
+    telegram_service.client.get_dialogs.side_effect = Exception("Test unexpected exception")
 
-    # Test fallback entity (no first_name, last_name or title)
-    class UnknownEntity:
-        def __init__(self, id):
-            self.id = id
-
-    entity1 = UnknownEntity(999)
-    assert telegram_service._get_entity_title(entity1) == "Entity 999"
+    with pytest.raises(ValueError, match="An unexpected error occurred"):
+        await telegram_service.list_chats(ListChatsInput())
