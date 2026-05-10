@@ -2,6 +2,7 @@ import os
 import sys
 from loguru import logger
 
+
 def setup_logger(level: str = "INFO"):
     """
     Configures the global logger with a professional format.
@@ -9,7 +10,7 @@ def setup_logger(level: str = "INFO"):
     # Ensure logs directory has secure permissions
     os.makedirs("logs", mode=0o700, exist_ok=True)
     logger.remove()  # Remove default handler
-    
+
     # Custom format
     log_format = (
         "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
@@ -17,14 +18,14 @@ def setup_logger(level: str = "INFO"):
         "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
         "<level>{message}</level>"
     )
-    
+
     logger.add(
         sys.stderr,
         level=level,
         format=log_format,
         colorize=True,
     )
-    
+
     # Optionally add a file logger
     logger.add(
         "logs/telegram_mcp.log",
@@ -32,8 +33,9 @@ def setup_logger(level: str = "INFO"):
         retention="1 week",
         level="INFO",
         format=log_format,
-        compression="zip"
+        compression="zip",
     )
+
 
 # Pre-configure with default level
 setup_logger()

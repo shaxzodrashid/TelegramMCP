@@ -10,6 +10,7 @@ mcp = FastMCP(
     instructions=f"{settings.SERVER_NAME} v{settings.SERVER_VERSION}",
 )
 
+
 @mcp.tool()
 async def get_account_info():
     """
@@ -25,6 +26,7 @@ async def get_account_info():
         logger.error(f"Error getting account info: {e}")
         return "An error occurred while getting account info."
 
+
 @mcp.tool()
 async def list_chats(
     search: str | None = None,
@@ -35,18 +37,18 @@ async def list_chats(
     ctx: Context | None = None,
 ) -> ListChatsResult:
     """
-    List Telegram chats/dialogs available to the authenticated user. 
-    Supports optional case-insensitive search by chat title/username and optional filtering by chat type. 
+    List Telegram chats/dialogs available to the authenticated user.
+    Supports optional case-insensitive search by chat title/username and optional filtering by chat type.
     Returns chat metadata only and does not read message history.
     """
     logger.info("Executing list_chats tool")
-    
+
     # Trim search
     if search:
         search = search.strip()
         if not search:
             search = None
-            
+
     args = ListChatsInput(
         search=search,
         type_filters=type_filters,
@@ -56,11 +58,12 @@ async def list_chats(
     )
     return await telegram_service.list_chats(args)
 
+
 if __name__ == "__main__":
     # Note: FastMCP usually runs via its own CLI or as an ASGI app.
     # To run as a standalone server for debugging:
     logger.info(f"Starting {settings.SERVER_NAME} v{settings.SERVER_VERSION}...")
-    
+
     # Configuration validation
     if settings.API_ID == 0 or settings.API_HASH == "placeholder":
         logger.warning("Telegram API credentials are not configured!")
@@ -71,7 +74,7 @@ if __name__ == "__main__":
 
     logger.info("Server is running on stdio transport")
     logger.info("Waiting for MCP messages...")
-    
+
     try:
         mcp.run()
     except Exception as e:
