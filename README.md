@@ -6,7 +6,7 @@ A Model Context Protocol (MCP) server for Telegram, built with Telethon and Fast
 - **MTProto Support**: High-performance communication via Telethon.
 - **FastMCP**: Seamless integration with AI agents.
 - **Async & Performance**: Optimized for speed and concurrency.
-- **Professional Core**: Built-in logging, caching, and configuration.
+- **Professional Core**: Built-in logging and configuration.
 
 ## Setup
 
@@ -30,7 +30,7 @@ uv run python -m telegram_mcp.server
 ```
 
 ## Structure
-- `src/telegram_mcp/core/`: Essential utilities (logger, cache, config).
+- `src/telegram_mcp/core/`: Essential utilities (logger, config).
 - `src/telegram_mcp/service/`: Business logic and external API clients.
 - `src/telegram_mcp/models/`: Pydantic data models.
 - `src/telegram_mcp/server.py`: MCP server definition and tool registration.

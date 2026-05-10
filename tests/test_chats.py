@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from unittest.mock import AsyncMock, MagicMock
 from telethon import types
-from telegram_mcp.models.chats import ListChatsInput, ChatType, ChatSummary, ListChatsResult
+from telegram_mcp.models.chats import ListChatsInput, ChatType
 from telegram_mcp.service.telegram import TelegramService
 
 @pytest.fixture
