@@ -81,18 +81,36 @@ class TelegramService:
             
             all_summaries = []
 
-            # 2. Map dialogs to ChatSummary
+            # 2. Process and filter dialogs
+            search_query = input_data.search.strip().lower() if input_data.search else None
+
             for dialog in dialogs:
+                # Early filter: Archive (cheapest check)
+                if not input_data.include_archived and dialog.archived:
+                    continue
+
                 entity = dialog.entity
                 chat_type = self._map_entity_to_chat_type(entity)
 
-                if chat_type is None:
+                # Early filter: Type (if known from entity mapping)
+                if chat_type is None or (input_data.type_filters and chat_type not in input_data.type_filters):
                     continue
 
-                # Extracting basic metadata
+                # Early filter: Search
                 title = self._get_entity_title(entity)
                 username = getattr(entity, 'username', None)
 
+                if search_query:
+                    match = False
+                    if search_query in title.lower():
+                        match = True
+                    elif username and search_query in username.lower():
+                        match = True
+
+                    if not match:
+                        continue
+
+                # Only allocate ChatSummary for dialogs that pass all filters
                 summary = ChatSummary(
                     id=entity.id,
                     access_hash=getattr(entity, 'access_hash', None),
@@ -104,36 +122,6 @@ class TelegramService:
                     is_archived=dialog.archived
                 )
                 all_summaries.append(summary)
-
-            # 3. Apply search filtering
-            search_query = input_data.search.strip() if input_data.search else None
-            if search_query:
-                search_query = search_query.lower()
-                filtered_summaries = []
-                for s in all_summaries:
-                    # Match title
-                    if search_query in s.title.lower():
-                        filtered_summaries.append(s)
-                        continue
-
-                    # Match username
-                    if s.username and search_query in s.username.lower():
-                        filtered_summaries.append(s)
-                        continue
-
-                    # Match first_name / last_name for user entities
-                    # We need to check the original entity if possible, or we can just rely on title which usually contains name
-                    # For Users, title is first_name + last_name in Telethon's get_display_name
-                    # So title check covers it.
-                all_summaries = filtered_summaries
-
-            # 4. Apply type filtering
-            if input_data.type_filters:
-                all_summaries = [s for s in all_summaries if s.type in input_data.type_filters]
-
-            # 5. Archived filtering
-            if not input_data.include_archived:
-                all_summaries = [s for s in all_summaries if not s.is_archived]
 
             total_filtered = len(all_summaries)
 
