@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 class Settings(BaseSettings):
     # Telegram Credentials
     API_ID: int = 0
@@ -19,9 +18,10 @@ class Settings(BaseSettings):
     SERVER_VERSION: str = "0.1.0"
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=True
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True
     )
-
 
 # Singleton instance
 settings = Settings(_env_file=".env")
