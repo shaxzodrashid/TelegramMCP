@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from unittest.mock import AsyncMock, MagicMock
 from telethon import types
-from telegram_mcp.models.chats import ListChatsInput, ChatType, ChatSummary, ListChatsResult
+from telegram_mcp.models.chats import ListChatsInput, ChatType
 from telegram_mcp.service.telegram import TelegramService
 
 @pytest.fixture
@@ -147,3 +147,30 @@ async def test_list_chats_filtering(telegram_service):
     result = await telegram_service.list_chats(ListChatsInput(limit=1, offset=1))
     assert len(result.data) == 1
     assert result.meta.has_more is False
+
+@pytest.mark.asyncio
+async def test_list_chats_error_handling(telegram_service):
+    telegram_service.client = AsyncMock()
+    telegram_service.client.is_user_authorized.return_value = True
+    telegram_service._is_initialized = True
+
+    # Test FloodWaitError
+    from telethon import errors
+    class MockRequest:
+        pass
+    telegram_service.client.get_dialogs.side_effect = errors.FloodWaitError(request=MockRequest(), capture=42)
+
+    with pytest.raises(ValueError, match="Telegram rate limit: try again in 42 seconds"):
+        await telegram_service.list_chats(ListChatsInput())
+
+    # Test ValueError
+    telegram_service.client.get_dialogs.side_effect = ValueError("Test ValueError")
+
+    with pytest.raises(ValueError, match="Test ValueError"):
+        await telegram_service.list_chats(ListChatsInput())
+
+    # Test generic Exception
+    telegram_service.client.get_dialogs.side_effect = Exception("Test generic Exception")
+
+    with pytest.raises(ValueError, match="An unexpected error occurred"):
+        await telegram_service.list_chats(ListChatsInput())

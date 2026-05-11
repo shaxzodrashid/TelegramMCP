@@ -2,7 +2,7 @@ import os
 import re
 import unicodedata
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple
 from .config import settings
 
 # Suspicious extensions as per requirements
@@ -24,6 +24,7 @@ def sanitize_filename(filename: str) -> str:
     Sanitize a filename by removing unsafe characters and preventing path traversal.
     """
     # Remove path components if any were passed
+    filename = filename.replace('\\', '/')
     filename = os.path.basename(filename)
     
     # Remove control characters
