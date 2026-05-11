@@ -118,5 +118,5 @@ if __name__ == "__main__":
 
     try:
         mcp.run()
-    except Exception as e:
-        logger.error(f"Server error: {e}")
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user")
