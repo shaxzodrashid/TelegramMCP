@@ -34,6 +34,50 @@ def test_list_chats_input_validation():
     with pytest.raises(ValidationError):
         ListChatsInput(extra_field="rejected")
 
+def test_get_entity_title(telegram_service):
+    # User with first and last name
+    user1 = MagicMock(spec=types.User)
+    user1.first_name = "Alice"
+    user1.last_name = "Smith"
+    assert telegram_service._get_entity_title(user1) == "Alice Smith"
+
+    # User with only first name
+    user2 = MagicMock(spec=types.User)
+    user2.first_name = "Bob"
+    user2.last_name = None
+    assert telegram_service._get_entity_title(user2) == "Bob"
+
+    # User with only last name
+    user3 = MagicMock(spec=types.User)
+    user3.first_name = None
+    user3.last_name = "Jones"
+    assert telegram_service._get_entity_title(user3) == "Jones"
+
+    # User with neither name
+    user4 = MagicMock(spec=types.User)
+    user4.id = 123
+    user4.first_name = None
+    user4.last_name = None
+    assert telegram_service._get_entity_title(user4) == "User 123"
+
+    # Entity with a title
+    chat1 = MagicMock()
+    chat1.title = "Cool Group"
+    assert telegram_service._get_entity_title(chat1) == "Cool Group"
+
+    # Entity with an empty title
+    chat2 = MagicMock()
+    chat2.id = 456
+    chat2.title = ""
+    assert telegram_service._get_entity_title(chat2) == "Chat 456"
+
+    # Entity without a title attribute
+    class EntityWithoutTitle:
+        id = 789
+
+    assert telegram_service._get_entity_title(EntityWithoutTitle()) == "Entity 789"
+
+
 @pytest.mark.asyncio
 async def test_map_entity_to_chat_type(telegram_service):
     # User -> user
