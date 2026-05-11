@@ -36,7 +36,7 @@ class TelegramService:
             if os.path.exists(session_file):
                 try:
                     os.chmod(session_file, 0o600)
-                except Exception as e:
+                except (OSError, PermissionError) as e:
                     logger.warning(f"Could not secure session file permissions: {e}")
 
             self._is_initialized = True

@@ -43,7 +43,7 @@ def update_env_file(key: str, value: str):
     # Enforce 0600 in case the file already existed with wider permissions
     try:
         os.chmod(env_path, 0o600)
-    except Exception:
+    except (OSError, PermissionError):
         pass
 
 async def auth_flow():
