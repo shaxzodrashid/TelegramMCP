@@ -23,7 +23,8 @@ def sanitize_filename(filename: str) -> str:
     """
     Sanitize a filename by removing unsafe characters and preventing path traversal.
     """
-    # Remove path components if any were passed
+    # Remove path components if any were passed (handles both Unix and Windows separators)
+    filename = filename.replace("\\", "/")
     filename = os.path.basename(filename)
     
     # Remove control characters

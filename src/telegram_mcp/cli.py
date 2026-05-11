@@ -17,6 +17,9 @@ app = typer.Typer(
 console = Console()
 
 def update_env_file(key: str, value: str):
+    # Sanitize value to prevent environment variable injection
+    value = str(value).replace('\n', '').replace('\r', '')
+
     env_path = ".env"
     lines = []
     if os.path.exists(env_path):
