@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     SERVER_NAME: str = "Telegram MCP Server"
     SERVER_VERSION: str = "0.1.0"
 
+    # Download Settings
+    TELEGRAM_DOWNLOAD_DIR: str = "storage/downloads/telegram"
+    TELEGRAM_DOWNLOAD_MAX_FILE_SIZE_MB: int = 100
+
+    # Upload Settings
+    TELEGRAM_UPLOAD_DIR: str = "storage/uploads/telegram"
+    TELEGRAM_UPLOAD_MAX_FILE_SIZE_MB: int = 100
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
