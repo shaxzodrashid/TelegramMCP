@@ -17,6 +17,8 @@ app = typer.Typer(
 console = Console()
 
 def update_env_file(key: str, value: str):
+    # Sanitize input to prevent environment variable injection
+    value = str(value).replace("\n", "").replace("\r", "")
     env_path = ".env"
     lines = []
     if os.path.exists(env_path):
@@ -57,7 +59,7 @@ async def auth_flow():
         console.print("You can get them from [link=https://my.telegram.org/apps]https://my.telegram.org/apps[/link]")
 
         api_id_input = Prompt.ask("Enter your API_ID")
-        api_hash_input = Prompt.ask("Enter your API_HASH")
+        api_hash_input = Prompt.ask("Enter your API_HASH", password=True)
 
         update_env_file("API_ID", api_id_input)
         update_env_file("API_HASH", api_hash_input)
@@ -85,7 +87,7 @@ async def auth_flow():
             console.print(f"[bold red]Failed to send code: {e}[/bold red]")
             return
 
-        code = Prompt.ask("Enter the code you received")
+        code = Prompt.ask("Enter the code you received", password=True)
         try:
             await client.sign_in(phone, code)
         except Exception as e:
