@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
-from telegram_mcp.server import get_account_info
+from telegram_mcp.server import get_account_info, list_chats
+from telegram_mcp.models.chats import ChatType, ListChatsInput, ListChatsResult, ListChatsMeta
 
 @pytest.fixture
 def mock_telegram_service():
@@ -47,3 +48,68 @@ async def test_get_account_info_exception(mock_telegram_service):
 
     result = await get_account_info()
     assert result == "An error occurred while getting account info."
+
+@pytest.mark.asyncio
+async def test_list_chats_success(mock_telegram_service):
+    expected_result = ListChatsResult(
+        data=[],
+        meta=ListChatsMeta(total_returned=0, limit=50, offset=0, search=None, type_filters=None, has_more=False)
+    )
+    mock_telegram_service.list_chats = AsyncMock(return_value=expected_result)
+
+    result = await list_chats()
+
+    assert result == expected_result
+    mock_telegram_service.list_chats.assert_called_once()
+    args = mock_telegram_service.list_chats.call_args[0][0]
+    assert isinstance(args, ListChatsInput)
+    assert args.search is None
+    assert args.type_filters is None
+    assert args.limit == 50
+    assert args.offset == 0
+    assert args.include_archived is False
+
+@pytest.mark.asyncio
+async def test_list_chats_with_filters(mock_telegram_service):
+    expected_result = ListChatsResult(
+        data=[],
+        meta=ListChatsMeta(total_returned=0, limit=10, offset=5, search="test", type_filters=[ChatType.user, ChatType.group], has_more=False)
+    )
+    mock_telegram_service.list_chats = AsyncMock(return_value=expected_result)
+
+    result = await list_chats(
+        search="test",
+        type_filters=[ChatType.user, ChatType.group],
+        limit=10,
+        offset=5,
+        include_archived=True
+    )
+
+    assert result == expected_result
+    mock_telegram_service.list_chats.assert_called_once()
+    args = mock_telegram_service.list_chats.call_args[0][0]
+    assert isinstance(args, ListChatsInput)
+    assert args.search == "test"
+    assert args.type_filters == [ChatType.user, ChatType.group]
+    assert args.limit == 10
+    assert args.offset == 5
+    assert args.include_archived is True
+
+@pytest.mark.asyncio
+async def test_list_chats_search_trimming(mock_telegram_service):
+    expected_result = ListChatsResult(
+        data=[],
+        meta=ListChatsMeta(total_returned=0, limit=50, offset=0, search="test query", type_filters=None, has_more=False)
+    )
+    mock_telegram_service.list_chats = AsyncMock(return_value=expected_result)
+
+    # Test trimming
+    result = await list_chats(search="  test query  ")
+    assert result == expected_result
+    args = mock_telegram_service.list_chats.call_args[0][0]
+    assert args.search == "test query"
+
+    # Test all whitespace
+    await list_chats(search="   ")
+    args_whitespace = mock_telegram_service.list_chats.call_args[0][0]
+    assert args_whitespace.search is None
