@@ -11,3 +11,5 @@ logs/
 .venv
 .env
 logs/
+*.session
+*.log
