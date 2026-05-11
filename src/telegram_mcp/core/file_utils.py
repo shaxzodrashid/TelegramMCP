@@ -2,7 +2,7 @@ import os
 import re
 import unicodedata
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple
 from .config import settings
 
 # Suspicious extensions as per requirements

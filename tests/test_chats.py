@@ -147,3 +147,21 @@ async def test_list_chats_filtering(telegram_service):
     result = await telegram_service.list_chats(ListChatsInput(limit=1, offset=1))
     assert len(result.data) == 1
     assert result.meta.has_more is False
+
+@pytest.mark.asyncio
+async def test_list_chats_loguru_injection(telegram_service):
+    """
+    Test that malicious user input containing format specifiers
+    does not cause a ValueError in Loguru.
+    """
+    telegram_service.client = AsyncMock()
+    telegram_service.client.is_user_authorized.return_value = True
+    telegram_service._is_initialized = True
+    telegram_service.client.get_dialogs.return_value = []
+
+    # Input that would crash f-string interpolation if logged with parsing enabled
+    malicious_input = "{malicious_key}"
+
+    # This should not raise an error
+    result = await telegram_service.list_chats(ListChatsInput(search=malicious_input))
+    assert isinstance(result, ListChatsResult)

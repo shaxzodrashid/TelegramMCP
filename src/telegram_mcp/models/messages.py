@@ -1,7 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, ConfigDict, Field
 from .media import MediaType
-from datetime import datetime
 
 class ParseMode(str, Enum):
     plain = "plain"
