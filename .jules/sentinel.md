@@ -6,3 +6,11 @@
 **Vulnerability:** The Telegram MCP server was dumping sensitive debug logs to a world-readable `logs/` directory. Furthermore, endpoints like `get_account_info` and `list_chats` were directly returning the raw exception `str(e)` on error, which could leak stack traces or internal state to clients.
 **Learning:** Returning `str(e)` in an API or CLI response often breaks the "Fail securely" principle by exposing more details than the user needs. Also, local log directories must have restricted permissions (e.g. `0o700`) to prevent local unprivileged users from reading potentially sensitive data, especially when using Telethon, which can generate verbose network logs.
 **Prevention:** Catch generic exceptions and return safe, generalized error strings (e.g. "An unexpected error occurred"). Use `os.makedirs(mode=0o700)` for local log directories and set the default file log level to `INFO` rather than `DEBUG`.
+## 2026-05-11 - [TOCTOU Vulnerability in Session File Creation]
+**Vulnerability:** Telethon  files (which contain sensitive cryptographic keys) were briefly created with default (potentially world-readable) OS permissions before being secured via .
+**Learning:** A Time-of-Check to Time-of-Use (TOCTOU) race condition allowed a brief window where the session file could be read by unauthorized users on the system.
+**Prevention:** Pre-create sensitive files using  with strict permissions (e.g.,  and ) *before* allowing libraries to access or write to them.
+## 2025-05-11 - [TOCTOU Vulnerability in Session File Creation]
+**Vulnerability:** Telethon `.session` files (which contain sensitive cryptographic keys) were briefly created with default (potentially world-readable) OS permissions before being secured via `os.chmod`.
+**Learning:** A Time-of-Check to Time-of-Use (TOCTOU) race condition allowed a brief window where the session file could be read by unauthorized users on the system.
+**Prevention:** Pre-create sensitive files using `os.open` with strict permissions (e.g., `0o600` and `O_CREAT | O_WRONLY`) *before* allowing libraries to access or write to them.

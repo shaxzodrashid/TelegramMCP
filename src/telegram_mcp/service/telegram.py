@@ -35,18 +35,25 @@ class TelegramService:
             self.client = TelegramClient(
                 settings.SESSION_NAME, settings.API_ID, settings.API_HASH
             )
-            await self.client.connect()
 
-            # Enforce secure permissions on the session file
+            # Enforce secure permissions on the session file BEFORE connecting
+            # to avoid race condition where file is created with default permissions
             session_file = f"{settings.SESSION_NAME}.session"
             def secure_session_file():
-                if os.path.exists(session_file):
-                    try:
-                        os.chmod(session_file, 0o600)
-                    except Exception as e:
-                        logger.warning(f"Could not secure session file permissions: {e}")
+                try:
+                    # Pre-create securely or open
+                    flags = os.O_CREAT | os.O_WRONLY | os.O_APPEND
+                    mode = 0o600
+                    fd = os.open(session_file, flags, mode)
+                    os.close(fd)
+                    # Enforce on existing
+                    os.chmod(session_file, 0o600)
+                except Exception as e:
+                    logger.warning(f"Could not secure session file permissions: {e}")
 
             await asyncio.to_thread(secure_session_file)
+
+            await self.client.connect()
 
             self._is_initialized = True
             logger.info("Telethon client connected successfully.")

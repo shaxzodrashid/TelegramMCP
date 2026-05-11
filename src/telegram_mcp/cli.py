@@ -61,7 +61,7 @@ async def auth_flow():
         )
 
         api_id_input = Prompt.ask("Enter your API_ID")
-        api_hash_input = Prompt.ask("Enter your API_HASH")
+        api_hash_input = Prompt.ask("Enter your API_HASH", password=True)
 
         update_env_file("API_ID", api_id_input)
         update_env_file("API_HASH", api_hash_input)
@@ -75,6 +75,18 @@ async def auth_flow():
     client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
 
     console.print("\n[bold green]Connecting to Telegram...[/bold green]")
+
+    # Pre-create session file with secure permissions
+    session_file = f"{settings.SESSION_NAME}.session"
+    try:
+        flags = os.O_CREAT | os.O_WRONLY | os.O_APPEND
+        mode = 0o600
+        fd = os.open(session_file, flags, mode)
+        os.close(fd)
+        os.chmod(session_file, 0o600)
+    except Exception as e:
+        console.print(f"[yellow]Warning: Could not secure session file: {e}[/yellow]")
+
     await client.connect()
 
     if not await client.is_user_authorized():
