@@ -10,7 +10,6 @@ mcp = FastMCP(
     instructions=f"{settings.SERVER_NAME} v{settings.SERVER_VERSION}",
 )
 
-
 @mcp.tool()
 async def get_account_info():
     """
@@ -25,7 +24,6 @@ async def get_account_info():
     except Exception as e:
         logger.error(f"Error getting account info: {e}")
         return "An error occurred while getting account info."
-
 
 @mcp.tool()
 async def list_chats(
@@ -57,7 +55,6 @@ async def list_chats(
         include_archived=include_archived,
     )
     return await telegram_service.list_chats(args)
-
 
 if __name__ == "__main__":
     # Note: FastMCP usually runs via its own CLI or as an ASGI app.
