@@ -31,7 +31,10 @@ def test_download_media_input_validation():
 def test_sanitize_filename():
     assert sanitize_filename("test.txt") == "test.txt"
     assert sanitize_filename("test/path.txt") == "path.txt"
-    assert sanitize_filename(r"test\path.txt") == "path.txt"
+    if os.name == "nt":
+        assert sanitize_filename(r"test\path.txt") == "path.txt"
+    else:
+        assert sanitize_filename(r"test\path.txt") == "test_path.txt"
     assert sanitize_filename("../test.txt") == "test.txt"
     assert sanitize_filename("test:*.txt") == "test__.txt"
     assert sanitize_filename("   .hidden") == "hidden"
