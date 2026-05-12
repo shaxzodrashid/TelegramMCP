@@ -2,6 +2,7 @@ import os
 import sys
 from loguru import logger
 
+
 def setup_logger(level: str = "INFO"):
     """
     Configures the global logger with a professional format.
@@ -32,8 +33,9 @@ def setup_logger(level: str = "INFO"):
         retention="1 week",
         level="INFO",
         format=log_format,
-        compression="zip"
+        compression="zip",
     )
+
 
 # Pre-configure with default level
 setup_logger()
