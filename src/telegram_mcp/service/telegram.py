@@ -171,6 +171,12 @@ class TelegramService:
         except errors.FloodWaitError as e:
             logger.error("Telegram rate limit: try again in {} seconds", e.seconds)
             raise ValueError(f"Telegram rate limit: try again in {e.seconds} seconds")
+        except errors.RPCError as e:
+            logger.error(f"Telegram API error in list_chats: {e}")
+            raise ValueError(f"Telegram API error occurred: {str(e)}")
+        except OSError as e:
+            logger.error(f"Network connection error in list_chats: {e}")
+            raise ValueError("A network error occurred while connecting to Telegram")
         except ValueError as e:
             logger.error("Validation error in list_chats: {}", e)
             raise
