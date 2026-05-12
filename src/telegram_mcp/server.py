@@ -22,7 +22,7 @@ async def get_account_info():
             return "Not logged in to Telegram. Use the 'telegram-mcp auth' command to authenticate."
         return f"Logged in as: {me.first_name} (@{me.username or 'N/A'}) [ID: {me.id}]"
     except Exception as e:
-        logger.error(f"Error getting account info: {e}")
+        logger.error("Error getting account info: {}", e)
         return "An error occurred while getting account info."
 
 @mcp.tool()
@@ -59,7 +59,7 @@ async def list_chats(
 if __name__ == "__main__":
     # Note: FastMCP usually runs via its own CLI or as an ASGI app.
     # To run as a standalone server for debugging:
-    logger.info(f"Starting {settings.SERVER_NAME} v{settings.SERVER_VERSION}...")
+    logger.info("Starting {} v{}...", settings.SERVER_NAME, settings.SERVER_VERSION)
 
     # Configuration validation
     if settings.API_ID == 0 or settings.API_HASH == "placeholder":
@@ -75,4 +75,4 @@ if __name__ == "__main__":
     try:
         mcp.run()
     except Exception as e:
-        logger.error(f"Server error: {e}")
+        logger.error("Server error: {}", e)

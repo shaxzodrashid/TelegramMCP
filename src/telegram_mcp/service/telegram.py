@@ -33,7 +33,7 @@ class TelegramService:
                 try:
                     os.chmod(session_file, 0o600)
                 except Exception as e:
-                    logger.warning(f"Could not secure session file permissions: {e}")
+                    logger.warning("Could not secure session file permissions: {}", e)
 
             self._is_initialized = True
             logger.info("Telethon client connected successfully.")
@@ -62,8 +62,13 @@ class TelegramService:
         List Telegram chats/dialogs available to the authenticated user.
         """
         start_time = time.time()
-        logger.info(f"list_chats request: search='{input_data.search}', "
-                    f"types={input_data.type_filters}, limit={input_data.limit}, offset={input_data.offset}")
+        logger.info(
+            "list_chats request: search='{}', types={}, limit={}, offset={}",
+            input_data.search,
+            input_data.type_filters,
+            input_data.limit,
+            input_data.offset,
+        )
 
         try:
             await self.start()
@@ -142,7 +147,12 @@ class TelegramService:
             has_more = total_filtered > (input_data.offset + input_data.limit)
 
             elapsed_time = time.time() - start_time
-            logger.info(f"list_chats success: returned {len(paged_summaries)}/{total_filtered} chats in {elapsed_time:.2f}s")
+            logger.info(
+                "list_chats success: returned {}/{} chats in {:.2f}s",
+                len(paged_summaries),
+                total_filtered,
+                elapsed_time,
+            )
 
             return ListChatsResult(
                 data=paged_summaries,
@@ -157,13 +167,13 @@ class TelegramService:
             )
 
         except errors.FloodWaitError as e:
-            logger.error(f"Telegram rate limit: try again in {e.seconds} seconds")
+            logger.error("Telegram rate limit: try again in {} seconds", e.seconds)
             raise ValueError(f"Telegram rate limit: try again in {e.seconds} seconds")
         except ValueError as e:
-            logger.error(f"Validation error in list_chats: {e}")
+            logger.error("Validation error in list_chats: {}", e)
             raise
         except Exception as e:
-            logger.exception(f"Unexpected error in list_chats: {e}")
+            logger.exception("Unexpected error in list_chats: {}", e)
             raise ValueError("An unexpected error occurred")
 
     def _map_entity_to_chat_type(self, entity) -> Optional[ChatType]:
