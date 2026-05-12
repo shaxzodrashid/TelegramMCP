@@ -3,10 +3,12 @@ from typing import Any, Dict, Optional, TypeVar
 
 T = TypeVar("T")
 
+
 class AsyncCache:
     """
     A simple in-memory cache with TTL (Time To Live).
     """
+
     def __init__(self):
         self._cache: Dict[str, Dict[str, Any]] = {}
 
@@ -23,10 +25,7 @@ class AsyncCache:
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None):
         expiry = time.time() + ttl if ttl else None
-        self._cache[key] = {
-            "value": value,
-            "expiry": expiry
-        }
+        self._cache[key] = {"value": value, "expiry": expiry}
 
     async def delete(self, key: str):
         if key in self._cache:
@@ -34,6 +33,7 @@ class AsyncCache:
 
     async def clear(self):
         self._cache.clear()
+
 
 # Global cache instance
 cache = AsyncCache()

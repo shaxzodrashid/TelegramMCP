@@ -2,6 +2,9 @@ import pytest
 from telegram_mcp.core.cache import cache
 from telegram_mcp.core.logger import logger
 
+import time
+from unittest.mock import patch
+
 @pytest.mark.asyncio
 async def test_cache():
     await cache.set("test_key", "test_value", ttl=1)
@@ -13,17 +16,22 @@ async def test_cache():
     assert value is None
 
 @pytest.mark.asyncio
-async def test_cache_clear():
-    await cache.set("key1", "value1")
-    await cache.set("key2", "value2")
+async def test_cache_expiry():
+    # Test setting without TTL
+    await cache.set("no_ttl_key", "no_ttl_value")
+    assert await cache.get("no_ttl_key") == "no_ttl_value"
 
-    assert await cache.get("key1") == "value1"
-    assert await cache.get("key2") == "value2"
+    # Test setting with TTL
+    await cache.set("expiry_key", "expiry_value", ttl=1)
+    assert await cache.get("expiry_key") == "expiry_value"
+
+    # Mock time to simulate time passing beyond TTL
+    with patch("telegram_mcp.core.cache.time.time", return_value=time.time() + 2):
+        assert await cache.get("expiry_key") is None
+        # Verify the no_ttl_key is unaffected
+        assert await cache.get("no_ttl_key") == "no_ttl_value"
 
     await cache.clear()
-
-    assert await cache.get("key1") is None
-    assert await cache.get("key2") is None
 
 def test_logger():
     # Just verify it doesn't crash
