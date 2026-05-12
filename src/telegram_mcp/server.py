@@ -4,12 +4,33 @@ from .core.config import settings
 from .core.logger import logger
 from .service.telegram import telegram_service
 from .models.chats import ChatType, ListChatsInput, ListChatsResult
+from .models.media import DownloadMediaInput, DownloadMediaResult
+from .models.messages import SendMessageInput, SendMessageResult
 
 # Initialize FastMCP server
 mcp = FastMCP(
     settings.SERVER_NAME,
     instructions=f"{settings.SERVER_NAME} v{settings.SERVER_VERSION}",
 )
+
+
+@mcp.tool()
+async def telegram_send_message(
+    input_data: SendMessageInput,
+    ctx: Context | None = None,
+) -> SendMessageResult:
+    """
+    Send a message or media to a Telegram chat.
+    Can be used to send normal text messages, reply to existing messages, or send files (photos, videos, documents, etc.).
+
+    Safety rules:
+    - Files are strictly validated against dangerous extensions (e.g., .exe, .sh) and path traversal.
+    - Sending media by URL is currently not supported.
+    - Media paths must be within configured safe upload/download directories.
+    """
+    logger.info("Executing telegram_send_message tool")
+    return await telegram_service.send_message(input_data)
+
 
 @mcp.tool()
 async def get_account_info():
@@ -28,6 +49,7 @@ async def get_account_info():
     except Exception as e:
         logger.exception("Unexpected error getting account info: {}", e)
         return "An error occurred while getting account info."
+
 
 @mcp.tool()
 async def list_chats(
@@ -60,10 +82,37 @@ async def list_chats(
     )
     return await telegram_service.list_chats(args)
 
+
+@mcp.tool()
+async def download_telegram_media(
+    chat_id: str | int,
+    message_id: int,
+    download_directory: str | None = None,
+    preferred_file_name: str | None = None,
+    allow_suspicious_files: bool = False,
+    ctx: Context | None = None,
+) -> DownloadMediaResult:
+    """
+    Download media (photo, video, audio, voice, document, etc.) from a Telegram message.
+    The file is saved to a safe local storage directory.
+    Suspicious file types (executables, archives) are blocked by default unless allow_suspicious_files is true.
+    """
+    logger.info("Executing download_telegram_media tool")
+
+    args = DownloadMediaInput(
+        chat_id=chat_id,
+        message_id=message_id,
+        download_directory=download_directory,
+        preferred_file_name=preferred_file_name,
+        allow_suspicious_files=allow_suspicious_files,
+    )
+    return await telegram_service.download_media(args)
+
+
 if __name__ == "__main__":
     # Note: FastMCP usually runs via its own CLI or as an ASGI app.
     # To run as a standalone server for debugging:
-    logger.info(f"Starting {settings.SERVER_NAME} v{settings.SERVER_VERSION}...")
+    logger.info("Starting {} v{}...", settings.SERVER_NAME, settings.SERVER_VERSION)
 
     # Configuration validation
     if settings.API_ID == 0 or settings.API_HASH == "placeholder":
@@ -78,5 +127,5 @@ if __name__ == "__main__":
 
     try:
         mcp.run()
-    except Exception as e:
-        logger.error(f"Server error: {e}")
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user")

@@ -29,6 +29,37 @@ Run the MCP server:
 uv run python -m telegram_mcp.server
 ```
 
+## Tools
+
+### Account Info
+- `get_account_info`: Returns information about the currently logged-in Telegram account.
+
+### Chat Management
+- `list_chats`: List Telegram chats/dialogs with search and filtering.
+
+### Media Download
+- `download_telegram_media`: Safely download media attachments from a Telegram message.
+  - **Inputs**: `chat_id`, `message_id`, `download_directory` (optional), `preferred_file_name` (optional), `allow_suspicious_files` (default: false).
+  - **Safety Features**: 
+    - Prevents path traversal.
+    - Blocks suspicious file types (executables, archives) by default.
+    - Sanitizes filenames.
+    - Limits file size (default 100MB).
+    - Ensures downloads stay within a designated storage directory.
+
+### Sending Messages
+- `telegram_send_message`: Safely send a message or media file to a Telegram chat, or reply to an existing message.
+  - **Inputs**: `chat` (required), `message` (optional), `reply_to_message_id` (optional), `media` (optional), `parse_mode` (optional), `silent` (optional), `disable_link_preview` (optional).
+  - **Safety Features**:
+    - Strictly blocks dangerous file extensions (`.exe`, `.sh`, `.bat`, etc.) for uploads.
+    - Prevents path traversal for local media files.
+    - Enforces max upload file size (default 100MB).
+    - Forbids URL-based media fetching for security.
+  - **Examples**:
+    - **Send text**: `{"chat": "@username", "message": "Hello"}`
+    - **Reply with text**: `{"chat": "123456", "message": "Got it!", "reply_to_message_id": 987}`
+    - **Send photo**: `{"chat": "@username", "media": {"path": "C:/safe/dir/photo.jpg", "type": "photo"}}`
+
 ## Structure
 - `src/telegram_mcp/core/`: Essential utilities (logger, cache, config).
 - `src/telegram_mcp/service/`: Business logic and external API clients.
