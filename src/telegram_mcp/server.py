@@ -1,4 +1,5 @@
 from mcp.server.fastmcp import FastMCP, Context
+from telethon import errors
 from .core.config import settings
 from .core.logger import logger
 from .service.telegram import telegram_service
@@ -42,8 +43,11 @@ async def get_account_info():
         if not me:
             return "Not logged in to Telegram. Use the 'telegram-mcp auth' command to authenticate."
         return f"Logged in as: {me.first_name} (@{me.username or 'N/A'}) [ID: {me.id}]"
-    except Exception as e:
+    except (ValueError, errors.RPCError, OSError) as e:
         logger.error("Error getting account info: {}", e)
+        return "An error occurred while getting account info."
+    except Exception as e:
+        logger.exception("Unexpected error getting account info: {}", e)
         return "An error occurred while getting account info."
 
 
