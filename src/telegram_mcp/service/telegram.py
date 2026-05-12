@@ -3,6 +3,7 @@ import time
 from typing import Optional
 from pathlib import Path
 from telethon import TelegramClient, errors, types
+from ..models.messages import SendMessageInput, SendMessageResult
 from ..core.cache import AsyncCache
 from ..core.config import settings
 from ..core.logger import logger
@@ -48,7 +49,7 @@ class TelegramService:
                 try:
                     os.chmod(session_file, 0o600)
                 except Exception as e:
-                    logger.warning(f"Could not secure session file permissions: {e}")
+                    logger.warning("Could not secure session file permissions: {}", e)
 
             self._is_initialized = True
             logger.info("Telethon client connected successfully.")
@@ -168,13 +169,13 @@ class TelegramService:
             )
 
         except errors.FloodWaitError as e:
-            logger.error(f"Telegram rate limit: try again in {e.seconds} seconds")
+            logger.error("Telegram rate limit: try again in {} seconds", e.seconds)
             raise ValueError(f"Telegram rate limit: try again in {e.seconds} seconds")
         except ValueError as e:
-            logger.error(f"Validation error in list_chats: {e}")
+            logger.error("Validation error in list_chats: {}", e)
             raise
         except Exception as e:
-            logger.exception(f"Unexpected error in list_chats: {e}")
+            logger.exception("Unexpected error in list_chats: {}", e)
             raise ValueError("An unexpected error occurred")
 
     async def download_media(
@@ -300,7 +301,7 @@ class TelegramService:
             )
 
         except errors.FloodWaitError as e:
-            logger.error(f"Telegram rate limit: try again in {e.seconds} seconds")
+            logger.error("Telegram rate limit: try again in {} seconds", e.seconds)
             return DownloadMediaResult(
                 success=False,
                 chat_id=input_data.chat_id,
@@ -309,7 +310,7 @@ class TelegramService:
                 error_reason=f"Telegram rate limit: try again in {e.seconds} seconds",
             )
         except Exception as e:
-            logger.exception(f"Unexpected error in download_media: {e}")
+            logger.exception("Unexpected error in download_media: {}", e)
             return DownloadMediaResult(
                 success=False,
                 chat_id=input_data.chat_id,
@@ -468,7 +469,7 @@ class TelegramService:
                 )
             else:
                 # Handle Text
-                logger.info(f"Sending text message to {input_data.chat}")
+                logger.info("Sending text message to {}", input_data.chat)
                 sent_msg = await self.client.send_message(
                     entity,
                     message=input_data.message or "",
