@@ -1,0 +1,30 @@
+name: Pylint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        # Match your project's supported versions
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        # Install project + pylint in the environment
+        run: uv pip install . pylint
+
+      - name: Analysing the code with pylint
+        # Lint the source directory and tests
+        run: |
+          uv run pylint src tests
