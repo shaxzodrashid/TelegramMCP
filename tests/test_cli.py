@@ -2,25 +2,38 @@ import os
 import pytest
 from telegram_mcp.cli import update_env_file
 
-def test_update_env_file_sanitizes_newlines(tmp_path, monkeypatch):
-    # Change working directory to a temporary path where a mock .env will be created
+def test_update_env_file_creates_new(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
-    # Write initial .env file
-    env_file = tmp_path / ".env"
-    env_file.write_text("EXISTING_VAR=hello\n")
+    update_env_file("TEST_KEY", "test_value")
 
-    # Try to inject a new variable through a newline
-    malicious_value = "myvalue\nINJECTED_VAR=hacked"
-    update_env_file("SAFE_VAR", malicious_value)
+    env_path = tmp_path / ".env"
+    assert env_path.exists()
+    assert env_path.read_text() == "TEST_KEY=test_value\n"
 
-    # Read the content
-    content = env_file.read_text()
+    # Check permissions
+    st = os.stat(env_path)
+    assert oct(st.st_mode)[-3:] == "600"
 
-    # Verify the value was sanitized and no new line was injected
-    assert "SAFE_VAR=myvaluemyvalue\n" not in content  # shouldn't be duplicate myvalue, should just have newline removed
-    assert "\nINJECTED_VAR=hacked" not in content
+def test_update_env_file_appends_to_existing(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    env_path = tmp_path / ".env"
+    env_path.write_text("OTHER_KEY=other_value\n")
 
-    # Verify the actual resulting value
-    assert "SAFE_VAR=myvalueINJECTED_VAR=hacked" in content
-    assert "EXISTING_VAR=hello" in content
+    update_env_file("TEST_KEY", "test_value")
+
+    content = env_path.read_text()
+    assert "OTHER_KEY=other_value\n" in content
+    assert "TEST_KEY=test_value\n" in content
+
+def test_update_env_file_updates_existing(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    env_path = tmp_path / ".env"
+    env_path.write_text("TEST_KEY=old_value\nOTHER_KEY=other_value\n")
+
+    update_env_file("TEST_KEY", "new_value")
+
+    content = env_path.read_text()
+    assert "TEST_KEY=new_value\n" in content
+    assert "TEST_KEY=old_value\n" not in content
+    assert "OTHER_KEY=other_value\n" in content

@@ -2,6 +2,7 @@ from enum import Enum
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
+
 class MediaType(str, Enum):
     photo = "photo"
     video = "video"
@@ -13,14 +14,24 @@ class MediaType(str, Enum):
     video_note = "video_note"
     unknown = "unknown"
 
+
 class DownloadMediaInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     chat_id: str | int = Field(..., description="The ID or username of the chat")
-    message_id: int = Field(..., description="The ID of the message containing the media", ge=1)
-    download_directory: str | None = Field(None, description="Optional subdirectory within the safe storage")
-    preferred_file_name: str | None = Field(None, description="Optional preferred name for the downloaded file")
-    allow_suspicious_files: bool = Field(False, description="Whether to allow downloading potentially unsafe file types")
+    message_id: int = Field(
+        ..., description="The ID of the message containing the media", ge=1
+    )
+    download_directory: str | None = Field(
+        None, description="Optional subdirectory within the safe storage"
+    )
+    preferred_file_name: str | None = Field(
+        None, description="Optional preferred name for the downloaded file"
+    )
+    allow_suspicious_files: bool = Field(
+        False, description="Whether to allow downloading potentially unsafe file types"
+    )
+
 
 class DownloadMediaResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
