@@ -79,8 +79,11 @@ class TelegramService:
         """
         start_time = time.time()
         logger.info(
-            f"list_chats request: search='{input_data.search}', "
-            f"types={input_data.type_filters}, limit={input_data.limit}, offset={input_data.offset}"
+            "list_chats request: search='{}', types={}, limit={}, offset={}",
+            input_data.search,
+            input_data.type_filters,
+            input_data.limit,
+            input_data.offset,
         )
 
         try:
@@ -153,7 +156,10 @@ class TelegramService:
 
             elapsed_time = time.time() - start_time
             logger.info(
-                f"list_chats success: returned {len(paged_summaries)}/{total_filtered} chats in {elapsed_time:.2f}s"
+                "list_chats success: returned {}/{} chats in {:.2f}s",
+                len(paged_summaries),
+                total_filtered,
+                elapsed_time,
             )
 
             return ListChatsResult(
@@ -172,10 +178,10 @@ class TelegramService:
             logger.error("Telegram rate limit: try again in {} seconds", e.seconds)
             raise ValueError(f"Telegram rate limit: try again in {e.seconds} seconds")
         except errors.RPCError as e:
-            logger.error(f"Telegram API error in list_chats: {e}")
+            logger.error("Telegram API error in list_chats: {}", e)
             raise ValueError(f"Telegram API error occurred: {str(e)}")
         except OSError as e:
-            logger.error(f"Network connection error in list_chats: {e}")
+            logger.error("Network connection error in list_chats: {}", e)
             raise ValueError("A network error occurred while connecting to Telegram")
         except ValueError as e:
             logger.error("Validation error in list_chats: {}", e)
@@ -191,7 +197,9 @@ class TelegramService:
         Download media from a Telegram message.
         """
         logger.info(
-            f"download_media request: chat_id='{input_data.chat_id}', message_id={input_data.message_id}"
+            "download_media request: chat_id='{}', message_id={}",
+            input_data.chat_id,
+            input_data.message_id,
         )
 
         try:
@@ -207,7 +215,10 @@ class TelegramService:
                 )
             except Exception as e:
                 logger.error(
-                    f"Failed to fetch message {input_data.message_id} in {input_data.chat_id}: {e}"
+                    "Failed to fetch message {} in {}: {}",
+                    input_data.message_id,
+                    input_data.chat_id,
+                    e,
                 )
                 return DownloadMediaResult(
                     success=False,
@@ -271,7 +282,7 @@ class TelegramService:
             )
 
             # 7. Perform download
-            logger.info(f"Downloading media to {safe_path}...")
+            logger.info("Downloading media to {}...", safe_path)
             downloaded_path = await self.client.download_media(
                 message, file=str(safe_path)
             )
@@ -337,7 +348,10 @@ class TelegramService:
         )
 
         logger.info(
-            f"send_message request: chat='{input_data.chat}', has_message={bool(input_data.message)}, has_media={bool(input_data.media)}"
+            "send_message request: chat='{}', has_message={}, has_media={}",
+            input_data.chat,
+            bool(input_data.message),
+            bool(input_data.media),
         )
 
         try:
@@ -391,7 +405,7 @@ class TelegramService:
                     chat_identifier = int(chat_identifier)
                 entity = await self.client.get_entity(chat_identifier)
             except Exception as e:
-                logger.error(f"Failed to resolve chat '{input_data.chat}': {e}")
+                logger.error("Failed to resolve chat '{}': {}", input_data.chat, e)
                 return SendMessageResult(
                     ok=False,
                     error={
@@ -462,7 +476,7 @@ class TelegramService:
 
                 # Determine mime type if possible, though Telethon usually guesses well
 
-                logger.info(f"Sending file {safe_path} to {input_data.chat}")
+                logger.info("Sending file {} to {}", safe_path, input_data.chat)
                 sent_msg = await self.client.send_file(
                     entity,
                     file=str(safe_path),
@@ -513,7 +527,7 @@ class TelegramService:
             )
 
         except errors.FloodWaitError as e:
-            logger.error(f"Telegram rate limit: try again in {e.seconds} seconds")
+            logger.error("Telegram rate limit: try again in {} seconds", e.seconds)
             return SendMessageResult(
                 ok=False,
                 error={
@@ -522,7 +536,7 @@ class TelegramService:
                 },
             )
         except Exception as e:
-            logger.exception(f"Unexpected error in send_message: {e}")
+            logger.exception("Unexpected error in send_message: {}", e)
             return SendMessageResult(
                 ok=False,
                 error={
