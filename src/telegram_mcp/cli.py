@@ -19,8 +19,9 @@ console = Console()
 
 
 def update_env_file(key: str, value: str):
-    # Sanitize input to prevent environment variable injection
-    value = str(value).replace("\n", "").replace("\r", "")
+    # Sanitize value to prevent environment variable injection
+    value = str(value).translate(str.maketrans("", "", "\n\r"))
+
     env_path = ".env"
     lines = []
     if os.path.exists(env_path):
