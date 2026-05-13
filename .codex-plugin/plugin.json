@@ -1,0 +1,6 @@
+{
+  "name": "telegrammcp",
+  "version": "0.1.0",
+  "description": "Telegram MCP Server for Codex",
+  "mcpServers": "./.mcp.json"
+}

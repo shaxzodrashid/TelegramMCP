@@ -218,9 +218,13 @@ def server():
     """
     Run the MCP server.
     """
+    import sys
     from .server import mcp
 
-    console.print("[bold green]Starting Telegram MCP Server...[/bold green]")
+    # IMPORTANT: Use stderr for messages to avoid breaking MCP stdio transport handshake
+    console.print(
+        "[bold green]Starting Telegram MCP Server...[/bold green]", file=sys.stderr
+    )
     # mcp.run() will start the stdio transport
     mcp.run()
 

@@ -1,3 +1,5 @@
+from pathlib import Path
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,6 +27,18 @@ class Settings(BaseSettings):
     # Upload Settings
     TELEGRAM_UPLOAD_DIR: str = "storage/uploads/telegram"
     TELEGRAM_UPLOAD_MAX_FILE_SIZE_MB: int = 100
+
+    @field_validator(
+        "SESSION_NAME", "TELEGRAM_DOWNLOAD_DIR", "TELEGRAM_UPLOAD_DIR", mode="after"
+    )
+    @classmethod
+    def resolve_to_absolute_path(cls, v: str) -> str:
+        """Resolves relative paths to absolute ones based on the current working directory."""
+        path = Path(v)
+        if not path.is_absolute():
+            # We assume relative paths are relative to the project root (CWD)
+            return str(path.absolute())
+        return str(path)
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True

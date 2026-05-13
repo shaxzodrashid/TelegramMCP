@@ -24,9 +24,45 @@ A Model Context Protocol (MCP) server for Telegram, built with Telethon and Fast
 
 ## Usage
 
-Run the MCP server:
+### Authentication
+Before running the server, you need to authenticate with Telegram:
+```bash
+uv run telegram-mcp auth
+```
+
+### Run Server
+```bash
+uv run telegram-mcp server
+```
+Or run directly via the module:
 ```bash
 uv run python -m telegram_mcp.server
+```
+
+## Codex Integration
+
+This server is fully compatible with [Codex](https://codex.openai.com/). 
+
+### Local Plugin Discovery
+The repository includes a `.codex-plugin/` directory for native discovery. You can add this directory as a local plugin in your Codex settings.
+
+### Manual Configuration
+Add the following to your `~/.codex/config.toml` (replace with your absolute paths):
+
+```toml
+[mcp_servers.telegrammcp]
+command = "/absolute/path/to/TelegramMCP/.venv/bin/python"
+args = ["-m", "telegram_mcp.server"]
+cwd = "/absolute/path/to/TelegramMCP"
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+env_vars = ["API_ID", "API_HASH", "SESSION_NAME", "TELEGRAM_PHONE_NUMBER"]
+
+[mcp_servers.telegrammcp.env]
+SERVER_NAME = "telegrammcp"
+LOG_LEVEL = "INFO"
+TELEGRAM_DOWNLOAD_DIR = "/absolute/path/to/TelegramMCP/storage/downloads/telegram"
+TELEGRAM_UPLOAD_DIR = "/absolute/path/to/TelegramMCP/storage/uploads/telegram"
 ```
 
 ## Tools
