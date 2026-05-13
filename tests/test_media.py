@@ -4,10 +4,9 @@ from pathlib import Path
 from pydantic import ValidationError
 from unittest.mock import AsyncMock, MagicMock, patch
 from telethon import types
-from telegram_mcp.models.media import DownloadMediaInput, DownloadMediaResult, MediaType
+from telegram_mcp.models.media import DownloadMediaInput, MediaType
 from telegram_mcp.core.file_utils import sanitize_filename, get_safe_path, is_suspicious, validate_size
 from telegram_mcp.service.telegram import TelegramService
-from telegram_mcp.core.config import settings
 
 @pytest.fixture
 def telegram_service():

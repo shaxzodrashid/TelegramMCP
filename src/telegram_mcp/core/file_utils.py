@@ -76,6 +76,10 @@ def sanitize_filename(filename: str) -> str:
     Sanitize a filename by removing unsafe characters and preventing path traversal.
     """
     # Remove path components if any were passed (handles both Unix and Windows separators)
+    if os.name != "nt":
+        # On non-Windows, backslash is a valid filename character, not a path separator.
+        filename = filename.replace("\\", "_")
+
     filename = filename.replace("\\", "/")
     filename = os.path.basename(filename)
 
@@ -119,7 +123,7 @@ def get_safe_path(base_dir: str, sub_dir: str | None, filename: str) -> Path:
         target_dir = base
 
     # Ensure target_dir is still under base
-    if not str(target_dir.resolve()).startswith(str(base)):
+    if not target_dir.resolve().is_relative_to(base):
         target_dir = base
 
     # Create directory if it doesn't exist
@@ -201,7 +205,7 @@ def validate_safe_upload_path(file_path: str) -> Path | None:
     # Ensure allowed dirs exist
     for allowed_dir in allowed_dirs:
         allowed_dir.mkdir(parents=True, exist_ok=True)
-        if str(path).startswith(str(allowed_dir)):
+        if path.is_relative_to(allowed_dir):
             return path
 
     return None
