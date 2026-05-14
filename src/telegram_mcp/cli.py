@@ -76,10 +76,26 @@ async def auth_flow():
         api_id = settings.API_ID
         api_hash = settings.API_HASH
 
+    # Pre-create session file securely to prevent TOCTOU vulnerability
+    session_file = f"{settings.SESSION_NAME}.session"
+    if not os.path.exists(session_file):
+        try:
+            fd = os.open(session_file, os.O_CREAT | os.O_WRONLY, 0o600)
+            os.close(fd)
+        except OSError as e:
+            logger.warning("Could not pre-create session file: {}", e)
+
     client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
 
     console.print("\n[bold green]Connecting to Telegram...[/bold green]")
     await client.connect()
+
+    # Enforce secure permissions on the session file
+    if os.path.exists(session_file):
+        try:
+            os.chmod(session_file, 0o600)
+        except OSError as e:
+            logger.warning("Could not secure session file permissions: {}", e)
 
     if not await client.is_user_authorized():
         phone = Prompt.ask(
