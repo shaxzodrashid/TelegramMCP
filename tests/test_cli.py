@@ -1,5 +1,4 @@
 import os
-import pytest
 from telegram_mcp.cli import update_env_file
 
 def test_update_env_file_creates_new(tmp_path, monkeypatch):

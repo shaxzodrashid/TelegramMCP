@@ -14,3 +14,7 @@
 **Vulnerability:** The codebase was using f-strings to format log messages (e.g., `logger.error(f"Error: {e}")`). When logging user input or exception messages using Loguru with f-strings, if the substituted string contains curly braces (e.g., `{}`), Loguru will attempt to parse them as formatting tags. This can lead to a `ValueError` (Loguru F-String Injection) and crash the application, or result in malformed logs.
 **Learning:** Loguru's formatting system parses tags like `<green>` and `{}` within the log string. When an f-string evaluates before being passed to Loguru, any untrusted content containing `{` or `}` will be erroneously parsed by Loguru.
 **Prevention:** Always pass variables to Loguru logging methods as positional or keyword arguments using `{}` placeholders in the main log string (e.g., `logger.error("Error: {}", e)`), rather than using Python's f-strings. This ensures Loguru safely formats the data without misinterpreting the content as structural tags.
+## 2023-10-27 - Path Traversal via String StartsWith
+**Vulnerability:** String-based path traversal vulnerability in `validate_safe_upload_path` and `get_safe_path` (using `str(path).startswith(str(allowed_dir))`).
+**Learning:** `startswith` checks on path strings can be easily bypassed. For instance, `/safe/dir-evil/file.txt` starts with `/safe/dir`, making it pass the check despite being in a different directory entirely.
+**Prevention:** Always use `path.is_relative_to(allowed_dir)` (from `pathlib`) to perform a proper hierarchy-aware containment check.
