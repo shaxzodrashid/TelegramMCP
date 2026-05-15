@@ -18,3 +18,7 @@
 **Vulnerability:** String-based path traversal vulnerability in `validate_safe_upload_path` and `get_safe_path` (using `str(path).startswith(str(allowed_dir))`).
 **Learning:** `startswith` checks on path strings can be easily bypassed. For instance, `/safe/dir-evil/file.txt` starts with `/safe/dir`, making it pass the check despite being in a different directory entirely.
 **Prevention:** Always use `path.is_relative_to(allowed_dir)` (from `pathlib`) to perform a proper hierarchy-aware containment check.
+## 2024-05-20 - TOCTOU Vulnerability in File Creation
+**Vulnerability:** The codebase had a Time-of-Check to Time-of-Use (TOCTOU) vulnerability where a sensitive file (`.session`) was created with default loose permissions by a library, and only later secured using `os.chmod()`. During the brief window between creation and `chmod()`, another process could potentially read the sensitive contents.
+**Learning:** Relying on `os.chmod()` after a file has been created leaves a race condition window. When dealing with third-party libraries that create files, if you can control the file path, you should pre-create the file securely yourself before handing it over to the library.
+**Prevention:** Always pre-create sensitive files with strict permissions (e.g., `0o600`) using `os.open` with `os.O_CREAT | os.O_WRONLY` flags *before* allowing libraries to write to them. Catch specific `OSError` exceptions during file permission modifications rather than generic `Exception`.
