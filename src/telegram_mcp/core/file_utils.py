@@ -151,6 +151,9 @@ def is_suspicious(filename: str) -> Tuple[bool, str]:
     Check if a file extension is suspicious.
     Returns (is_suspicious, extension).
     """
+    # Only strip from the right to avoid altering leading dots (e.g., hidden files)
+    filename = filename.rstrip(' .')
+
     # Check for double extensions
     parts = filename.lower().split(".")
     if len(parts) > 2:
@@ -165,6 +168,11 @@ def is_suspicious(filename: str) -> Tuple[bool, str]:
             return True, "." + parts[-1]
 
     ext = Path(filename).suffix.lower()
+
+    # Handle files with no basename (e.g., '.exe')
+    if not ext and filename.startswith("."):
+        ext = filename.lower()
+
     if ext in SUSPICIOUS_EXTENSIONS:
         return True, ext
     if ext in ARCHIVE_EXTENSIONS:
