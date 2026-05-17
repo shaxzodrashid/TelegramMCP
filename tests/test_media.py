@@ -50,6 +50,12 @@ def test_is_suspicious():
     assert is_suspicious("invoice.pdf.exe")[0] is True
     assert is_suspicious("image.jpg.js")[0] is True
     assert is_suspicious("report.tar.gz")[0] is True
+    # Bypasses
+    assert is_suspicious("malware.exe ")[0] is True
+    assert is_suspicious("malware.exe.")[0] is True
+    assert is_suspicious("malware.exe . ")[0] is True
+    assert is_suspicious(".exe")[0] is True
+    assert is_suspicious(".bash")[0] is True
 
 def test_validate_size():
     with patch('telegram_mcp.core.file_utils.settings') as mock_settings:
