@@ -37,3 +37,55 @@ def test_logger():
     # Just verify it doesn't crash
     logger.info("Testing logger")
     assert True
+
+def test_is_suspicious_bypass():
+    from telegram_mcp.core.file_utils import is_suspicious
+
+    # Check trailing space bypass attempt
+    suspicious, ext = is_suspicious("evil.exe ")
+    assert suspicious is True
+    assert ext == ".exe"
+
+    # Check trailing period bypass attempt
+    suspicious, ext = is_suspicious("evil.exe.")
+    assert suspicious is True
+    assert ext == ".exe"
+
+    # Normal malicious
+    suspicious, ext = is_suspicious("evil.exe")
+    assert suspicious is True
+    assert ext == ".exe"
+
+    # Double extension malicious
+    suspicious, ext = is_suspicious("evil.pdf.exe")
+    assert suspicious is True
+    assert ext == ".exe"
+
+    # Safe file
+    suspicious, ext = is_suspicious("good.pdf")
+    assert suspicious is False
+    assert ext == ".pdf"
+
+def test_is_suspicious_bypass_alternating():
+    from telegram_mcp.core.file_utils import is_suspicious
+
+    # Check alternating bypass attempt
+    suspicious, ext = is_suspicious("evil.exe .")
+    assert suspicious is True
+    assert ext == ".exe"
+
+    suspicious, ext = is_suspicious("evil.exe. ")
+    assert suspicious is True
+    assert ext == ".exe"
+
+
+def test_is_suspicious_leading_dot():
+    from telegram_mcp.core.file_utils import is_suspicious
+
+    suspicious, ext = is_suspicious(".exe")
+    assert suspicious is True
+    assert ext == ".exe"
+
+    suspicious, ext = is_suspicious(" .exe")
+    assert suspicious is True
+    assert ext == ".exe"

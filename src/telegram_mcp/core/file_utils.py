@@ -167,10 +167,9 @@ def is_suspicious(filename: str) -> Tuple[bool, str]:
         if any(("." + p) in SUSPICIOUS_EXTENSIONS for p in parts[1:]):
             return True, "." + parts[-1]
 
-    path_obj = Path(filename)
-    ext = path_obj.suffix.lower()
+    ext = Path(filename).suffix.lower()
 
-    # Handle hidden files like .exe or .bash which have no name but an extension-like structure
+    # Handle files with no basename (e.g., '.exe')
     if not ext and filename.startswith("."):
         ext = filename.lower()
 
