@@ -187,7 +187,7 @@ class TelegramService:
             raise ValueError(f"Telegram rate limit: try again in {e.seconds} seconds")
         except errors.RPCError as e:
             logger.error("Telegram API error in list_chats: {}", e)
-            raise ValueError(f"Telegram API error occurred: {str(e)}")
+            raise ValueError("A Telegram API error occurred")
         except OSError as e:
             logger.error("Network connection error in list_chats: {}", e)
             raise ValueError("A network error occurred while connecting to Telegram")
@@ -233,7 +233,7 @@ class TelegramService:
                     chat_id=input_data.chat_id,
                     message_id=input_data.message_id,
                     media_type=MediaType.unknown,
-                    error_reason=f"Message or chat not found: {str(e)}",
+                    error_reason="Message or chat not found",
                 )
 
             if not message or not message.media:
@@ -341,7 +341,7 @@ class TelegramService:
                 chat_id=input_data.chat_id,
                 message_id=input_data.message_id,
                 media_type=MediaType.unknown,
-                error_reason=f"An unexpected error occurred: {str(e)}",
+                error_reason="An unexpected error occurred",
             )
 
     async def send_message(self, input_data: "SendMessageInput") -> "SendMessageResult":
@@ -419,7 +419,6 @@ class TelegramService:
                     error={
                         "code": "CHAT_NOT_FOUND",
                         "message": f"Could not find chat '{input_data.chat}'",
-                        "details": {"error": str(e)},
                     },
                 )
 
@@ -550,7 +549,6 @@ class TelegramService:
                 error={
                     "code": "TELEGRAM_SEND_FAILED",
                     "message": "An unexpected error occurred",
-                    "details": {"error": str(e)},
                 },
             )
 
