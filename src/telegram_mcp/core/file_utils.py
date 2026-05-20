@@ -116,7 +116,12 @@ def get_safe_path(base_dir: str, sub_dir: str | None, filename: str) -> Path:
         clean_sub = Path(sub_dir).parts
         # Filter out '..' and empty parts
         clean_sub = [
-            p for p in clean_sub if p not in ("..", ".", "") and not p.startswith("/")
+            p
+            for p in clean_sub
+            if p not in ("..", ".", "")
+            and not p.startswith("/")
+            and not p.endswith("\\")
+            and ":" not in p
         ]
         target_dir = base.joinpath(*clean_sub)
     else:

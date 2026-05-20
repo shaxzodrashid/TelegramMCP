@@ -35,3 +35,7 @@
 **Vulnerability:** In `TelegramService`, methods like `download_media` and `send_message` were returning raw exception strings (`str(e)`) inside the error payloads.
 **Learning:** Returning `str(e)` in an API response breaks the "Fail securely" principle by exposing more internal details or state than the user needs. This is critical in an MCP server, where these errors are fed back to an LLM context.
 **Prevention:** Catch generic exceptions and return safe, generalized error strings in the data payload (e.g., "An unexpected error occurred"). Rely on `logger.exception` to log the true stack trace internally for debugging.
+## 2024-05-24 - Path Traversal via Windows Drive Letters
+**Vulnerability:** When processing relative user-provided paths into segments, Windows drive letters (like `C:\`) or segments ending in backslash can bypass naive sanitization checks (`..`, `.`, `/`). This allows arbitrary absolute paths to be interpreted natively by functions such as `base.joinpath(*clean_sub)` when running on Windows.
+**Learning:** Checking for Unix-style root slashes (`.startswith('/')`) does not cover Windows environments natively. Windows drive roots, colons, and backslashes must also be excluded.
+**Prevention:** Filter path segments containing colons (`:` not in p) or trailing backslashes (`not p.endswith('\\')`) in addition to standard Unix sanitization.
