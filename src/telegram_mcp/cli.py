@@ -206,6 +206,36 @@ def config():
     )
 
 
+async def logout_flow():
+    session_file = f"{settings.SESSION_NAME}.session"
+    if os.path.exists(session_file):
+        try:
+            # Revoke the session on the server side first to permanently invalidate the token
+            client = TelegramClient(settings.SESSION_NAME, settings.API_ID, settings.API_HASH)
+            await client.connect()
+            if await client.is_user_authorized():
+                # Note: log_out() automatically deletes the session file if successful
+                await client.log_out()
+            await client.disconnect()
+        except Exception as e:
+            # Log the error but proceed to delete the local file anyway to ensure we logout locally
+            logger.warning("Failed to revoke session on Telegram server: {}", e)
+        finally:
+            # Guarantee the local session file is always destroyed, even if network fails
+            if os.path.exists(session_file):
+                try:
+                    os.remove(session_file)
+                except Exception as e:
+                    console.print(f"[bold red]Failed to delete local session file: {e}[/bold red]")
+                    return
+
+            console.print(
+                "[bold green]Successfully logged out and session file deleted.[/bold green]"
+            )
+    else:
+        console.print("[yellow]No active session found.[/yellow]")
+
+
 @app.command()
 def logout():
     """
@@ -216,17 +246,7 @@ def logout():
     ):
         return
 
-    session_file = f"{settings.SESSION_NAME}.session"
-    if os.path.exists(session_file):
-        try:
-            os.remove(session_file)
-            console.print(
-                "[bold green]Successfully logged out and session file deleted.[/bold green]"
-            )
-        except Exception as e:
-            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
-    else:
-        console.print("[yellow]No active session found.[/yellow]")
+    asyncio.run(logout_flow())
 
 
 @app.command()
