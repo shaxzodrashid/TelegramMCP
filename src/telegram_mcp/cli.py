@@ -216,17 +216,52 @@ def logout():
     ):
         return
 
-    session_file = f"{settings.SESSION_NAME}.session"
-    if os.path.exists(session_file):
+    async def _do_logout():
+        session_file = f"{settings.SESSION_NAME}.session"
+        if not os.path.exists(session_file):
+            console.print("[yellow]No active session found.[/yellow]")
+            return
+
+        api_id = settings.API_ID
+        api_hash = settings.API_HASH
+
+        if not api_id or api_id == 0 or not api_hash or api_hash == "placeholder":
+            # If we don't have credentials, we can't properly log out from the server,
+            # but we can at least remove the file so the app is "logged out" locally.
+            try:
+                os.remove(session_file)
+                console.print(
+                    "[yellow]Telegram API credentials are missing. Only local session file deleted.[/yellow]"
+                )
+            except Exception as e:
+                console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
+            return
+
+        client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
+
         try:
-            os.remove(session_file)
+            console.print("[bold green]Connecting to Telegram to revoke session...[/bold green]")
+            await client.connect()
+            # client.log_out() will revoke the session and delete the file automatically
+            await client.log_out()
             console.print(
                 "[bold green]Successfully logged out and session file deleted.[/bold green]"
             )
         except Exception as e:
-            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
-    else:
-        console.print("[yellow]No active session found.[/yellow]")
+            logger.warning("Failed to log out from Telegram server: {}", e)
+            # Fallback to local deletion if server logout fails
+            if os.path.exists(session_file):
+                try:
+                    os.remove(session_file)
+                    console.print(
+                        "[yellow]Could not log out from server, but local session file was deleted.[/yellow]"
+                    )
+                except Exception as del_e:
+                    console.print(f"[bold red]Failed to delete session file: {del_e}[/bold red]")
+        finally:
+            await client.disconnect()
+
+    asyncio.run(_do_logout())
 
 
 @app.command()
