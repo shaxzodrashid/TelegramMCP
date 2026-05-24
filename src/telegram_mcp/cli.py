@@ -206,27 +206,48 @@ def config():
     )
 
 
+async def logout_flow():
+    session_file = f"{settings.SESSION_NAME}.session"
+    api_id = settings.API_ID
+    api_hash = settings.API_HASH
+
+    client = None
+    if api_id and api_id != 0 and api_hash and api_hash != "placeholder":
+        try:
+            client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
+            await client.connect()
+            if await client.is_user_authorized():
+                await client.log_out()
+                console.print("[bold green]Successfully logged out from Telegram server and session file deleted.[/bold green]")
+                return
+        except Exception as e:
+            logger.warning("Failed to log out from server securely: {}", e)
+        finally:
+            if client and client.is_connected():
+                await client.disconnect()
+
+    # Fallback if log_out failed or client couldn't be initialized
+    if os.path.exists(session_file):
+        try:
+            os.remove(session_file)
+            console.print("[bold green]Successfully deleted local session file.[/bold green]")
+        except Exception as e:
+            console.print("[bold red]Failed to delete session file:[/bold red]", str(e))
+    else:
+        console.print("[yellow]No active session found.[/yellow]")
+
+
 @app.command()
 def logout():
     """
-    Log out from Telegram and delete the session file.
+    Log out from Telegram and delete the session file securely.
     """
     if not typer.confirm(
         "Are you sure you want to log out and delete the session file?"
     ):
         return
 
-    session_file = f"{settings.SESSION_NAME}.session"
-    if os.path.exists(session_file):
-        try:
-            os.remove(session_file)
-            console.print(
-                "[bold green]Successfully logged out and session file deleted.[/bold green]"
-            )
-        except Exception as e:
-            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
-    else:
-        console.print("[yellow]No active session found.[/yellow]")
+    asyncio.run(logout_flow())
 
 
 @app.command()
