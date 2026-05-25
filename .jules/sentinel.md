@@ -35,3 +35,7 @@
 **Vulnerability:** In `TelegramService`, methods like `download_media` and `send_message` were returning raw exception strings (`str(e)`) inside the error payloads.
 **Learning:** Returning `str(e)` in an API response breaks the "Fail securely" principle by exposing more internal details or state than the user needs. This is critical in an MCP server, where these errors are fed back to an LLM context.
 **Prevention:** Catch generic exceptions and return safe, generalized error strings in the data payload (e.g., "An unexpected error occurred"). Rely on `logger.exception` to log the true stack trace internally for debugging.
+## 2024-05-26 - Insecure Session Management on Logout
+**Vulnerability:** The application was implementing a "logout" functionality by simply deleting the local `.session` file without communicating with the server to invalidate the session token.
+**Learning:** Merely deleting a local file that stores a session token does not invalidate the session server-side. If the local session file had been previously compromised or exfiltrated, an attacker could continue to use it even after the user "logged out" locally. Session termination must always revoke the token on the authentication provider.
+**Prevention:** To securely log out and invalidate a Telethon session, explicitly call `await client.log_out()` to revoke the session token on the Telegram server. This ensures that all active clients relying on that session become immediately unauthorized.
