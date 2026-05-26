@@ -206,6 +206,46 @@ def config():
     )
 
 
+async def logout_flow():
+    session_file = f"{settings.SESSION_NAME}.session"
+    if not os.path.exists(session_file):
+        console.print("[yellow]No active session found.[/yellow]")
+        return
+
+    api_id = settings.API_ID
+    api_hash = settings.API_HASH
+
+    logged_out_server = False
+
+    if api_id and api_id != 0 and api_hash and api_hash != "placeholder":
+        try:
+            client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
+            await client.connect()
+            if await client.is_user_authorized():
+                await client.log_out()
+                logged_out_server = True
+            await client.disconnect()
+        except Exception as e:
+            logger.warning("Could not contact server to revoke session: {}", e)
+
+    # Fallback/cleanup if client.log_out() didn't run or fail, or credentials missing
+    if os.path.exists(session_file):
+        try:
+            os.remove(session_file)
+        except Exception as e:
+            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
+            return
+
+    if logged_out_server:
+        console.print(
+            "[bold green]Successfully logged out from Telegram server and session file deleted.[/bold green]"
+        )
+    else:
+        console.print(
+            "[bold yellow]Session file deleted locally, but could not revoke on server.[/bold yellow]"
+        )
+
+
 @app.command()
 def logout():
     """
@@ -216,17 +256,7 @@ def logout():
     ):
         return
 
-    session_file = f"{settings.SESSION_NAME}.session"
-    if os.path.exists(session_file):
-        try:
-            os.remove(session_file)
-            console.print(
-                "[bold green]Successfully logged out and session file deleted.[/bold green]"
-            )
-        except Exception as e:
-            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
-    else:
-        console.print("[yellow]No active session found.[/yellow]")
+    asyncio.run(logout_flow())
 
 
 @app.command()
