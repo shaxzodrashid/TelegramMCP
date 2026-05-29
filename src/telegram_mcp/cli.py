@@ -206,27 +206,57 @@ def config():
     )
 
 
+async def logout_flow():
+    session_file = f"{settings.SESSION_NAME}.session"
+    if not os.path.exists(session_file):
+        console.print("[yellow]No active session found.[/yellow]")
+        return
+
+    api_id = settings.API_ID
+    api_hash = settings.API_HASH
+
+    if not api_id or api_id == 0 or not api_hash or api_hash == "placeholder":
+        # Fallback to just deleting the file if credentials are missing
+        try:
+            os.remove(session_file)
+            console.print("[bold green]Successfully deleted local session file (could not connect to server to revoke token).[/bold green]")
+        except Exception as e:
+            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
+        return
+
+    client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
+    try:
+        await client.connect()
+        if await client.is_user_authorized():
+            # This deletes the file and revokes the token on the server
+            await client.log_out()
+            console.print("[bold green]Successfully logged out and session token revoked on server.[/bold green]")
+        else:
+            await client.disconnect()
+            os.remove(session_file)
+            console.print("[bold green]Local session was not authorized. Deleted session file.[/bold green]")
+    except Exception as e:
+        console.print(f"[bold red]Error during logout: {e}[/bold red]")
+        # Fallback to local deletion
+        if os.path.exists(session_file):
+            try:
+                os.remove(session_file)
+                console.print("[yellow]Deleted local session file despite server error.[/yellow]")
+            except Exception as e2:
+                pass
+
+
 @app.command()
 def logout():
     """
-    Log out from Telegram and delete the session file.
+    Log out from Telegram securely by revoking the token on the server.
     """
     if not typer.confirm(
         "Are you sure you want to log out and delete the session file?"
     ):
         return
 
-    session_file = f"{settings.SESSION_NAME}.session"
-    if os.path.exists(session_file):
-        try:
-            os.remove(session_file)
-            console.print(
-                "[bold green]Successfully logged out and session file deleted.[/bold green]"
-            )
-        except Exception as e:
-            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
-    else:
-        console.print("[yellow]No active session found.[/yellow]")
+    asyncio.run(logout_flow())
 
 
 @app.command()
