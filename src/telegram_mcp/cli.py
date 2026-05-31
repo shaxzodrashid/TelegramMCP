@@ -206,10 +206,9 @@ def config():
     )
 
 
-@app.command()
-def logout():
+async def logout_flow():
     """
-    Log out from Telegram and delete the session file.
+    Securely log out from Telegram and delete the session file.
     """
     if not typer.confirm(
         "Are you sure you want to log out and delete the session file?"
@@ -217,16 +216,42 @@ def logout():
         return
 
     session_file = f"{settings.SESSION_NAME}.session"
+
     if os.path.exists(session_file):
         try:
-            os.remove(session_file)
-            console.print(
-                "[bold green]Successfully logged out and session file deleted.[/bold green]"
-            )
+            console.print("[bold blue]Connecting to Telegram server to revoke session...[/bold blue]")
+            client = TelegramClient(settings.SESSION_NAME, settings.API_ID, settings.API_HASH)
+            await client.connect()
+
+            if await client.is_user_authorized():
+                await client.log_out()
+                console.print(
+                    "[bold green]Successfully logged out from the server and session file deleted.[/bold green]"
+                )
+            else:
+                await client.disconnect()
+                os.remove(session_file)
+                console.print(
+                    "[bold green]Not authorized, but local session file deleted.[/bold green]"
+                )
         except Exception as e:
-            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
+            console.print(f"[bold yellow]Server logout failed, falling back to local file deletion: {e}[/bold yellow]")
+            try:
+                if os.path.exists(session_file):
+                    os.remove(session_file)
+                console.print("[bold green]Local session file deleted.[/bold green]")
+            except OSError as e2:
+                console.print(f"[bold red]Failed to delete session file: {e2}[/bold red]")
     else:
         console.print("[yellow]No active session found.[/yellow]")
+
+
+@app.command()
+def logout():
+    """
+    Log out from Telegram and delete the session file.
+    """
+    asyncio.run(logout_flow())
 
 
 @app.command()
