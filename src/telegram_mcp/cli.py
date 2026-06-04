@@ -206,6 +206,38 @@ def config():
     )
 
 
+async def logout_flow():
+    session_file = f"{settings.SESSION_NAME}.session"
+    if not os.path.exists(session_file):
+        console.print("[yellow]No active session found.[/yellow]")
+        return
+
+    try:
+        client = TelegramClient(settings.SESSION_NAME, settings.API_ID, settings.API_HASH)
+        await client.connect()
+        # Securely log out to invalidate the session token on the server
+        await client.log_out()
+    except Exception as e:
+        logger.error("Error logging out from Telegram server: {}", e)
+        console.print("[yellow]Could not log out from Telegram server. Proceeding to delete local session.[/yellow]")
+    finally:
+        # Disconnect to release file lock if client was created
+        if 'client' in locals():
+            await client.disconnect()
+
+    # Fallback to delete session file if log_out didn't remove it or failed
+    if os.path.exists(session_file):
+        try:
+            os.remove(session_file)
+        except OSError as e:
+            console.print("[bold red]Failed to delete session file: {}[/bold red]".format(e))
+            return
+
+    console.print(
+        "[bold green]Successfully logged out and session file deleted.[/bold green]"
+    )
+
+
 @app.command()
 def logout():
     """
@@ -216,17 +248,7 @@ def logout():
     ):
         return
 
-    session_file = f"{settings.SESSION_NAME}.session"
-    if os.path.exists(session_file):
-        try:
-            os.remove(session_file)
-            console.print(
-                "[bold green]Successfully logged out and session file deleted.[/bold green]"
-            )
-        except Exception as e:
-            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
-    else:
-        console.print("[yellow]No active session found.[/yellow]")
+    asyncio.run(logout_flow())
 
 
 @app.command()

@@ -1,5 +1,8 @@
 import os
-from telegram_mcp.cli import update_env_file
+import pytest
+from unittest.mock import AsyncMock, patch
+from telegram_mcp.cli import update_env_file, logout_flow
+from telegram_mcp.core.config import settings
 
 def test_update_env_file_creates_new(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
@@ -36,3 +39,47 @@ def test_update_env_file_updates_existing(tmp_path, monkeypatch):
     assert "TEST_KEY=new_value\n" in content
     assert "TEST_KEY=old_value\n" not in content
     assert "OTHER_KEY=other_value\n" in content
+
+
+@pytest.mark.asyncio
+async def test_logout_flow_success(tmp_path, monkeypatch):
+    # Setup mock session file
+    session_file = tmp_path / f"{settings.SESSION_NAME}.session"
+    session_file.write_text("dummy content")
+    monkeypatch.chdir(tmp_path)
+
+    with patch("telegram_mcp.cli.TelegramClient") as mock_client_class:
+        mock_client = AsyncMock()
+        mock_client_class.return_value = mock_client
+
+        await logout_flow()
+
+        mock_client.connect.assert_awaited_once()
+        mock_client.log_out.assert_awaited_once()
+        mock_client.disconnect.assert_awaited_once()
+
+        # Verify file is deleted
+        assert not session_file.exists()
+
+@pytest.mark.asyncio
+async def test_logout_flow_fallback(tmp_path, monkeypatch):
+    # Setup mock session file
+    session_file = tmp_path / f"{settings.SESSION_NAME}.session"
+    session_file.write_text("dummy content")
+    monkeypatch.chdir(tmp_path)
+
+    with patch("telegram_mcp.cli.TelegramClient") as mock_client_class:
+        mock_client = AsyncMock()
+        mock_client_class.return_value = mock_client
+
+        # Simulate log_out failing (e.g. network issue)
+        mock_client.log_out.side_effect = Exception("Network error")
+
+        await logout_flow()
+
+        mock_client.connect.assert_awaited_once()
+        mock_client.log_out.assert_awaited_once()
+        mock_client.disconnect.assert_awaited_once()
+
+        # Verify file is deleted via fallback
+        assert not session_file.exists()
