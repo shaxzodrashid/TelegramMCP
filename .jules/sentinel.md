@@ -35,3 +35,7 @@
 **Vulnerability:** In `TelegramService`, methods like `download_media` and `send_message` were returning raw exception strings (`str(e)`) inside the error payloads.
 **Learning:** Returning `str(e)` in an API response breaks the "Fail securely" principle by exposing more internal details or state than the user needs. This is critical in an MCP server, where these errors are fed back to an LLM context.
 **Prevention:** Catch generic exceptions and return safe, generalized error strings in the data payload (e.g., "An unexpected error occurred"). Rely on `logger.exception` to log the true stack trace internally for debugging.
+## 2024-05-25 - Insecure Session Management in CLI Logout
+**Vulnerability:** The `logout` command in the CLI merely deleted the local `.session` file without revoking the token on the Telegram server. This left the server-side session active, creating a vulnerability if the token was ever exfiltrated.
+**Learning:** For authenticated sessions tied to remote services, deleting the local file or client instance is insufficient. The session must be explicitly invalidated on the server side to ensure complete security.
+**Prevention:** Always use the client library's provided logout method (e.g., `await client.log_out()`) to revoke tokens before deleting local session storage files. Fall back to manual local file deletion only if the network or API fails.
