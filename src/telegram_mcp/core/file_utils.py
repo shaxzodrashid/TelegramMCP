@@ -151,6 +151,17 @@ def is_suspicious(filename: str) -> Tuple[bool, str]:
     Check if a file extension is suspicious.
     Returns (is_suspicious, extension).
     """
+    # Sanitize the filename to align with the final saved name and prevent control character bypasses.
+    # We apply the same control character removal and character replacement as sanitize_filename.
+    # We don't use sanitize_filename directly here because it strips leading dots, which breaks checks
+    # for hidden files like '.exe'.
+
+    # Remove control characters
+    filename = "".join(ch for ch in filename if unicodedata.category(ch)[0] != "C")
+    # Replace unsafe characters
+    filename = re.sub(r'[<>:"/\\|?*]', "_", filename)
+    filename = filename.strip()
+
     # Strip trailing spaces and dots which can be used to bypass extension checks on Windows
     filename = filename.rstrip(" .")
 
