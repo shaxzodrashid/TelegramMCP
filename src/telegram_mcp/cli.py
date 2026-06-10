@@ -209,24 +209,42 @@ def config():
 @app.command()
 def logout():
     """
-    Log out from Telegram and delete the session file.
+    Log out from Telegram and securely delete the session file.
     """
     if not typer.confirm(
         "Are you sure you want to log out and delete the session file?"
     ):
         return
 
-    session_file = f"{settings.SESSION_NAME}.session"
-    if os.path.exists(session_file):
+    async def _logout_async():
+        session_file = f"{settings.SESSION_NAME}.session"
+        if not os.path.exists(session_file):
+            console.print("[yellow]No active session found.[/yellow]")
+            return
+
+        client = TelegramClient(settings.SESSION_NAME, settings.API_ID, settings.API_HASH)
         try:
-            os.remove(session_file)
+            # Connect to Telegram and explicitly revoke the token on the server
+            await client.connect()
+            # client.log_out() will disconnect and delete the session file
+            await client.log_out()
             console.print(
-                "[bold green]Successfully logged out and session file deleted.[/bold green]"
+                "[bold green]Successfully logged out on server and session file deleted.[/bold green]"
             )
         except Exception as e:
-            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
-    else:
-        console.print("[yellow]No active session found.[/yellow]")
+            logger.warning("Server-side logout failed, performing local fallback: {}", e)
+            try:
+                # Disconnect to release file lock before manually deleting
+                await client.disconnect()
+                if os.path.exists(session_file):
+                    os.remove(session_file)
+                console.print(
+                    "[bold green]Local session file deleted (server-side logout failed).[/bold green]"
+                )
+            except Exception as e2:
+                console.print(f"[bold red]Failed to delete local session file: {e2}[/bold red]")
+
+    asyncio.run(_logout_async())
 
 
 @app.command()
