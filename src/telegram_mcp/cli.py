@@ -209,24 +209,53 @@ def config():
 @app.command()
 def logout():
     """
-    Log out from Telegram and delete the session file.
+    Log out from Telegram securely to invalidate the token, and delete the session file.
     """
     if not typer.confirm(
         "Are you sure you want to log out and delete the session file?"
     ):
         return
 
-    session_file = f"{settings.SESSION_NAME}.session"
-    if os.path.exists(session_file):
+    async def secure_logout():
+        session_file = f"{settings.SESSION_NAME}.session"
+        if not os.path.exists(session_file):
+            console.print("[yellow]No active session found.[/yellow]")
+            return
+
+        console.print("[blue]Logging out of Telegram server...[/blue]")
         try:
-            os.remove(session_file)
-            console.print(
-                "[bold green]Successfully logged out and session file deleted.[/bold green]"
-            )
+            # We must connect to Telegram to explicitly revoke the token on the server
+            client = TelegramClient(settings.SESSION_NAME, settings.API_ID, settings.API_HASH)
+            await client.connect()
+
+            # log_out() revokes the token and automatically deletes the local session file
+            success = await client.log_out()
+            if success:
+                console.print("[bold green]Successfully logged out and session revoked.[/bold green]")
+            else:
+                console.print("[yellow]Log out returned false, attempting manual file cleanup.[/yellow]")
+
         except Exception as e:
-            console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
-    else:
-        console.print("[yellow]No active session found.[/yellow]")
+            logger.warning("Failed to revoke session on server: {}", e)
+            console.print(f"[bold red]Server log out failed (network error?). Forcing local cleanup.[/bold red]")
+        finally:
+            # Ensure the client is disconnected to release the SQLite file lock
+            try:
+                # Need to use 'client' from the local scope safely
+                if 'client' in locals() and client:
+                    await client.disconnect()
+            except Exception:
+                pass
+
+            # Fallback local cleanup in case of failure or network issues
+            if os.path.exists(session_file):
+                try:
+                    os.remove(session_file)
+                    console.print("[bold green]Session file deleted locally.[/bold green]")
+                except Exception as e:
+                    console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
+
+    asyncio.run(secure_logout())
 
 
 @app.command()
