@@ -89,3 +89,16 @@ def test_is_suspicious_leading_dot():
     suspicious, ext = is_suspicious(" .exe")
     assert suspicious is True
     assert ext == ".exe"
+
+def test_is_suspicious_control_char_bypass():
+    from telegram_mcp.core.file_utils import is_suspicious
+
+    # Control character bypass attempt using left-to-right mark (U+200E)
+    suspicious, ext = is_suspicious("evil.exe\u200e")
+    assert suspicious is True
+    assert ext == ".exe"
+
+    # With unsafe characters
+    suspicious, ext = is_suspicious("evil?.exe")
+    assert suspicious is True
+    assert ext == ".exe"
