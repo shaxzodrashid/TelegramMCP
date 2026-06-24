@@ -1,5 +1,10 @@
 import os
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from telegram_mcp.cli import update_env_file
+
 
 def test_update_env_file_creates_new(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
@@ -14,6 +19,7 @@ def test_update_env_file_creates_new(tmp_path, monkeypatch):
     st = os.stat(env_path)
     assert oct(st.st_mode)[-3:] == "600"
 
+
 def test_update_env_file_appends_to_existing(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     env_path = tmp_path / ".env"
@@ -24,6 +30,7 @@ def test_update_env_file_appends_to_existing(tmp_path, monkeypatch):
     content = env_path.read_text()
     assert "OTHER_KEY=other_value\n" in content
     assert "TEST_KEY=test_value\n" in content
+
 
 def test_update_env_file_updates_existing(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
@@ -37,99 +44,118 @@ def test_update_env_file_updates_existing(tmp_path, monkeypatch):
     assert "TEST_KEY=old_value\n" not in content
     assert "OTHER_KEY=other_value\n" in content
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 @pytest.mark.asyncio
-async def test_logout_flow_authorized(tmp_path, monkeypatch):
-    from telegram_mcp.cli import _perform_logout
+async def test_logout_flow_authorized_revokes_server_session(tmp_path, monkeypatch):
+    from telegram_mcp.cli import _logout_flow
     from telegram_mcp.core.config import settings
 
     monkeypatch.chdir(tmp_path)
-    session_name = "test_logout"
-    settings.SESSION_NAME = session_name
+    monkeypatch.setattr(settings, "SESSION_NAME", "test_logout")
+    monkeypatch.setattr(settings, "API_ID", 12345)
+    monkeypatch.setattr(settings, "API_HASH", "test_hash")
 
-    session_file = tmp_path / f"{session_name}.session"
+    session_file = tmp_path / "test_logout.session"
     session_file.write_text("dummy")
 
     mock_client = AsyncMock()
     mock_client.is_user_authorized.return_value = True
 
     with patch("telegram_mcp.cli.TelegramClient", return_value=mock_client):
-        with patch("telegram_mcp.cli.console.print") as mock_print:
-            await _perform_logout()
+        with patch("telegram_mcp.cli.console.print"):
+            await _logout_flow()
 
-            mock_client.connect.assert_called_once()
-            mock_client.is_user_authorized.assert_called_once()
-            mock_client.log_out.assert_called_once()
-            mock_print.assert_called_with("[bold green]Successfully logged out from server and session file deleted.[/bold green]")
+    mock_client.connect.assert_called_once()
+    mock_client.is_user_authorized.assert_called_once()
+    mock_client.log_out.assert_called_once()
+    mock_client.disconnect.assert_called_once()
+    assert not session_file.exists()
+
 
 @pytest.mark.asyncio
-async def test_logout_flow_not_authorized(tmp_path, monkeypatch):
-    from telegram_mcp.cli import _perform_logout
+async def test_logout_flow_not_authorized_deletes_local_session(tmp_path, monkeypatch):
+    from telegram_mcp.cli import _logout_flow
     from telegram_mcp.core.config import settings
 
     monkeypatch.chdir(tmp_path)
-    session_name = "test_logout_not_auth"
-    settings.SESSION_NAME = session_name
+    monkeypatch.setattr(settings, "SESSION_NAME", "test_logout_not_auth")
+    monkeypatch.setattr(settings, "API_ID", 12345)
+    monkeypatch.setattr(settings, "API_HASH", "test_hash")
 
-    session_file = tmp_path / f"{session_name}.session"
+    session_file = tmp_path / "test_logout_not_auth.session"
     session_file.write_text("dummy")
 
     mock_client = AsyncMock()
     mock_client.is_user_authorized.return_value = False
 
     with patch("telegram_mcp.cli.TelegramClient", return_value=mock_client):
-        with patch("telegram_mcp.cli.console.print") as mock_print:
-            await _perform_logout()
+        with patch("telegram_mcp.cli.console.print"):
+            await _logout_flow()
 
-            mock_client.connect.assert_called_once()
-            mock_client.is_user_authorized.assert_called_once()
-            mock_client.disconnect.assert_called_once()
-            mock_client.log_out.assert_not_called()
+    mock_client.connect.assert_called_once()
+    mock_client.is_user_authorized.assert_called_once()
+    mock_client.log_out.assert_not_called()
+    mock_client.disconnect.assert_called_once()
+    assert not session_file.exists()
 
-            # Local file should be deleted
-            assert not session_file.exists()
-            mock_print.assert_called_with("[bold green]Session file deleted locally (was not authorized).[/bold green]")
 
 @pytest.mark.asyncio
-async def test_logout_flow_exception_fallback(tmp_path, monkeypatch):
-    from telegram_mcp.cli import _perform_logout
+async def test_logout_flow_exception_fallback_deletes_local_session(tmp_path, monkeypatch):
+    from telegram_mcp.cli import _logout_flow
     from telegram_mcp.core.config import settings
 
     monkeypatch.chdir(tmp_path)
-    session_name = "test_logout_exc"
-    settings.SESSION_NAME = session_name
+    monkeypatch.setattr(settings, "SESSION_NAME", "test_logout_exc")
+    monkeypatch.setattr(settings, "API_ID", 12345)
+    monkeypatch.setattr(settings, "API_HASH", "test_hash")
 
-    session_file = tmp_path / f"{session_name}.session"
+    session_file = tmp_path / "test_logout_exc.session"
     session_file.write_text("dummy")
 
     mock_client = AsyncMock()
     mock_client.connect.side_effect = Exception("Network Error")
-    mock_client.is_connected = MagicMock(return_value=False)
 
     with patch("telegram_mcp.cli.TelegramClient", return_value=mock_client):
-        with patch("telegram_mcp.cli.console.print") as mock_print:
-            await _perform_logout()
+        with patch("telegram_mcp.cli.console.print"):
+            await _logout_flow()
 
-            # Local file should be deleted despite exception
-            assert not session_file.exists()
-            mock_print.assert_called_with("[bold yellow]Failed to logout from server (Network Error), but local session file deleted.[/bold yellow]")
+    mock_client.connect.assert_called_once()
+    mock_client.disconnect.assert_called_once()
+    assert not session_file.exists()
+
 
 @pytest.mark.asyncio
-async def test_logout_flow_no_session_file(tmp_path, monkeypatch):
-    from telegram_mcp.cli import _perform_logout
+async def test_logout_flow_missing_credentials_deletes_local_only(tmp_path, monkeypatch):
+    from telegram_mcp.cli import _logout_flow
     from telegram_mcp.core.config import settings
 
     monkeypatch.chdir(tmp_path)
-    session_name = "test_logout_no_file"
-    settings.SESSION_NAME = session_name
+    monkeypatch.setattr(settings, "SESSION_NAME", "test_logout_missing_creds")
+    monkeypatch.setattr(settings, "API_ID", 0)
+    monkeypatch.setattr(settings, "API_HASH", "placeholder")
 
-    # Do not create session file
+    session_file = tmp_path / "test_logout_missing_creds.session"
+    session_file.write_text("dummy")
+
+    with patch("telegram_mcp.cli.TelegramClient") as mock_client_cls:
+        with patch("telegram_mcp.cli.console.print"):
+            await _logout_flow()
+
+    mock_client_cls.assert_not_called()
+    assert not session_file.exists()
+
+
+@pytest.mark.asyncio
+async def test_logout_flow_no_session_file(tmp_path, monkeypatch):
+    from telegram_mcp.cli import _logout_flow
+    from telegram_mcp.core.config import settings
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(settings, "SESSION_NAME", "test_logout_no_file")
 
     with patch("telegram_mcp.cli.TelegramClient") as mock_client_cls:
         with patch("telegram_mcp.cli.console.print") as mock_print:
-            await _perform_logout()
+            await _logout_flow()
 
-            mock_client_cls.assert_not_called()
-            mock_print.assert_called_with("[yellow]No active session found.[/yellow]")
+    mock_client_cls.assert_not_called()
+    mock_print.assert_called_with("[yellow]No active session found.[/yellow]")
