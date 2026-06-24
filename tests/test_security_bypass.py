@@ -47,3 +47,11 @@ def test_is_suspicious_handles_split_extension_control_characters():
     assert suspicious is True
     assert ext == ".exe"
     assert sanitize_filename("evil.e\bx\be") == "evil.exe"
+
+
+def test_is_suspicious_handles_single_backspace_suffix_example():
+    # PR #63 documented a malicious extension masked by a single backspace suffix.
+    suspicious, ext = is_suspicious("malicious.exe\b")
+    assert suspicious is True
+    assert ext == ".exe"
+    assert sanitize_filename("malicious.exe\b") == "malicious.exe"
