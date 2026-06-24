@@ -173,12 +173,13 @@ def test_logout_command_requires_confirmation_before_running_flow(monkeypatch):
 
 
 def test_logout_command_runs_secure_flow_after_confirmation(monkeypatch):
-    from telegram_mcp.cli import _logout_flow, logout
+    from telegram_mcp.cli import logout
 
+    sentinel_flow = object()
     monkeypatch.setattr("telegram_mcp.cli.typer.confirm", lambda _: True)
+    monkeypatch.setattr("telegram_mcp.cli._logout_flow", lambda: sentinel_flow)
 
     with patch("telegram_mcp.cli.asyncio.run") as mock_run:
         logout()
 
-    mock_run.assert_called_once()
-    assert mock_run.call_args.args[0].cr_code is _logout_flow.__code__
+    mock_run.assert_called_once_with(sentinel_flow)
