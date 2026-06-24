@@ -104,7 +104,7 @@ async def auth_flow():
         try:
             await client.send_code_request(phone)
         except Exception as e:
-            console.print(f"[bold red]Failed to send code: {e}[/bold red]")
+            console.print("[bold red]Failed to send code:[/bold red]", str(e))
             return
 
         code = Prompt.ask("Enter the code you received", password=True)
@@ -123,11 +123,11 @@ async def auth_flow():
                     await client.sign_in(password=password)
                 except Exception as e2:
                     console.print(
-                        f"[bold red]Password verification failed: {e2}[/bold red]"
+                        "[bold red]Password verification failed:[/bold red]", str(e2)
                     )
                     return
             else:
-                console.print(f"[bold red]Authentication failed: {e}[/bold red]")
+                console.print("[bold red]Authentication failed:[/bold red]", str(e))
                 return
 
     me = await client.get_me()
@@ -172,7 +172,7 @@ def status():
                     )
                 )
         except Exception as e:
-            console.print(f"[bold red]Error checking status: {e}[/bold red]")
+            console.print("[bold red]Error checking status:[/bold red]", str(e))
         finally:
             await telegram_service.stop()
 
@@ -212,46 +212,41 @@ def logout():
     """
     Log out from Telegram and delete the session file.
     """
-    if not typer.confirm(
-        "Are you sure you want to log out and delete the session file?"
-    ):
-        return
+    async def logout_flow():
+        if not typer.confirm(
+            "Are you sure you want to log out and delete the session file?"
+        ):
+            return
 
-    session_file = f"{settings.SESSION_NAME}.session"
+        session_file = f"{settings.SESSION_NAME}.session"
+        client = TelegramClient(settings.SESSION_NAME, settings.API_ID, settings.API_HASH)
 
-    async def _logout():
+        try:
+            await client.connect()
+            if await client.is_user_authorized():
+                await client.log_out()
+                console.print(
+                    "[bold green]Successfully logged out and session token revoked.[/bold green]"
+                )
+            else:
+                console.print("[yellow]No active server-side session found.[/yellow]")
+        except Exception as e:
+            console.print("[bold red]Failed to communicate with Telegram server:[/bold red]", str(e))
+        finally:
+            await client.disconnect()
+
+        # Fallback to local deletion
         if os.path.exists(session_file):
             try:
-                # Provide fallback dummy credentials if needed
-                api_id = settings.API_ID if settings.API_ID != 0 else 0
-                api_hash = settings.API_HASH if settings.API_HASH != "placeholder" else "placeholder"
-
-                client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
-                await client.connect()
-
-                # Server-side logout (this will invalidate the session and usually delete the .session file)
-                if await client.is_user_authorized():
-                    await client.log_out()
-                    console.print("[bold green]Successfully logged out from Telegram servers.[/bold green]")
-
-                # Make sure the file is disconnected before manual deletion
-                await client.disconnect()
+                os.remove(session_file)
+                console.print(
+                    "[bold green]Local session file deleted.[/bold green]"
+                )
             except Exception as e:
-                console.print(f"[bold yellow]Could not invalidate server session: {e}[/bold yellow]")
+                console.print("[bold red]Failed to delete session file:[/bold red]", str(e))
 
-            # Fallback manual deletion just in case
-            if os.path.exists(session_file):
-                try:
-                    os.remove(session_file)
-                    console.print(
-                        "[bold green]Local session file deleted.[/bold green]"
-                    )
-                except Exception as e:
-                    console.print(f"[bold red]Failed to delete session file: {e}[/bold red]")
-        else:
-            console.print("[yellow]No active session found.[/yellow]")
+    asyncio.run(logout_flow())
 
-    asyncio.run(_logout())
 
 
 @app.command()
