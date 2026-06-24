@@ -159,3 +159,26 @@ async def test_logout_flow_no_session_file(tmp_path, monkeypatch):
 
     mock_client_cls.assert_not_called()
     mock_print.assert_called_with("[yellow]No active session found.[/yellow]")
+
+
+def test_logout_command_requires_confirmation_before_running_flow(monkeypatch):
+    from telegram_mcp.cli import logout
+
+    monkeypatch.setattr("telegram_mcp.cli.typer.confirm", lambda _: False)
+
+    with patch("telegram_mcp.cli.asyncio.run") as mock_run:
+        logout()
+
+    mock_run.assert_not_called()
+
+
+def test_logout_command_runs_secure_flow_after_confirmation(monkeypatch):
+    from telegram_mcp.cli import _logout_flow, logout
+
+    monkeypatch.setattr("telegram_mcp.cli.typer.confirm", lambda _: True)
+
+    with patch("telegram_mcp.cli.asyncio.run") as mock_run:
+        logout()
+
+    mock_run.assert_called_once()
+    assert mock_run.call_args.args[0].cr_code is _logout_flow.__code__
