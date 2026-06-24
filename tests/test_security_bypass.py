@@ -39,3 +39,11 @@ def test_is_suspicious_handles_mixed_control_char_and_whitespace_suffix():
     assert suspicious is True
     assert ext == ".exe"
     assert sanitize_filename("evil.exe\x00 ") == "evil.exe"
+
+
+def test_is_suspicious_handles_split_extension_control_characters():
+    # PR #65 covered controls embedded inside the extension itself.
+    suspicious, ext = is_suspicious("evil.e\bx\be")
+    assert suspicious is True
+    assert ext == ".exe"
+    assert sanitize_filename("evil.e\bx\be") == "evil.exe"
