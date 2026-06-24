@@ -39,3 +39,8 @@
 **Vulnerability:** The `logout` command in the CLI merely deleted the local `.session` file without revoking the token on the Telegram server. This left the server-side session active, creating a vulnerability if the token was ever exfiltrated.
 **Learning:** For authenticated sessions tied to remote services, deleting the local file or client instance is insufficient. The session must be explicitly invalidated on the server side to ensure complete security.
 **Prevention:** Always use the client library's provided logout method (e.g., `await client.log_out()`) to revoke tokens before deleting local session storage files. Fall back to manual local file deletion only if the network or API fails.
+
+## 2024-06-19 - Insecure Session Management
+**Vulnerability:** Local deletion of Telethon `.session` files without severing the server-side connection left active tokens that could still be exploited if previously exfiltrated.
+**Learning:** Calling `os.remove()` on a session file is insufficient. Telethon sessions must be invalidated on the Telegram server via `await client.log_out()` to securely revoke credentials.
+**Prevention:** Always prioritize server-side token revocation and properly release file handles (`await client.disconnect()`) before attempting local cleanup.

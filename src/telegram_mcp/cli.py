@@ -206,6 +206,7 @@ def config():
     )
 
 
+
 @app.command()
 def logout():
     """
