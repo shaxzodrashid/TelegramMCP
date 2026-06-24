@@ -244,7 +244,7 @@ async def _logout_flow():
 @app.command()
 def logout():
     """
-    Log out from Telegram and delete the session file.
+    Log out from Telegram and delete the session file securely from the server.
     """
     async def logout_flow():
         if not typer.confirm(
@@ -255,6 +255,27 @@ def logout():
         session_file = f"{settings.SESSION_NAME}.session"
         client = TelegramClient(settings.SESSION_NAME, settings.API_ID, settings.API_HASH)
 
+    async def secure_logout():
+        session_file = f"{settings.SESSION_NAME}.session"
+        if not os.path.exists(session_file):
+            console.print("[yellow]No active session found.[/yellow]")
+            return
+
+        api_id = settings.API_ID
+        api_hash = settings.API_HASH
+
+        if not api_id or api_id == 0 or not api_hash or api_hash == "placeholder":
+            # Can't connect without credentials, fallback to simple file deletion
+            try:
+                os.remove(session_file)
+                console.print("[bold green]Local session file deleted (missing credentials for server logout).[/bold green]")
+            except Exception as e:
+                console.print(f"[bold red]Failed to delete local session file:[/bold red] {e}")
+            return
+
+        client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
+
+        console.print("[bold blue]Connecting to Telegram to revoke session...[/bold blue]")
         try:
             await client.connect()
             if await client.is_user_authorized():
