@@ -212,31 +212,47 @@ async def _logout_flow():
         console.print("[yellow]No active session found.[/yellow]")
         return
 
-    # Attempt to securely log out from the server
-    client = None
-    logged_out_securely = False
-    try:
-        if settings.API_ID != 0 and settings.API_HASH != "placeholder":
-            client = TelegramClient(settings.SESSION_NAME, settings.API_ID, settings.API_HASH)
-            await client.connect()
-            # If connected and authorized, log out to revoke the token on Telegram's side
-            if await client.is_user_authorized():
-                await client.log_out()
-                logged_out_securely = True
-                console.print("[bold green]Successfully logged out from Telegram server.[/bold green]")
-    except Exception as e:
-        logger.warning("Could not revoke server-side session, falling back to local deletion: {}", e)
-    finally:
-        if client:
-            await client.disconnect()
+    api_id = settings.API_ID
+    api_hash = settings.API_HASH
 
-    # Fallback/cleanup: manually delete the local session file if log_out didn't already remove it
+    if not api_id or api_id == 0 or not api_hash or api_hash == "placeholder":
+        try:
+            os.remove(session_file)
+            console.print(
+                "[bold green]Local session file deleted (missing credentials for server logout).[/bold green]"
+            )
+        except OSError as e:
+            console.print("[bold red]Failed to delete local session file:[/bold red]", str(e))
+        return
+
+    client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
+    logged_out_securely = False
+
+    console.print("[bold blue]Connecting to Telegram to revoke session...[/bold blue]")
+    try:
+        await client.connect()
+        if await client.is_user_authorized():
+            await client.log_out()
+            logged_out_securely = True
+            console.print(
+                "[bold green]Successfully logged out and session token revoked.[/bold green]"
+            )
+        else:
+            console.print("[yellow]No active server-side session found.[/yellow]")
+    except Exception as e:
+        logger.warning(
+            "Could not revoke server-side session, falling back to local deletion: {}", e
+        )
+        console.print("[bold red]Failed to communicate with Telegram server:[/bold red]", str(e))
+    finally:
+        await client.disconnect()
+
     if os.path.exists(session_file):
         try:
             os.remove(session_file)
             console.print("[bold green]Local session file deleted.[/bold green]")
         except OSError as e:
-            console.print(f"[bold red]Failed to delete session file locally: {e}[/bold red]")
+            console.print("[bold red]Failed to delete session file:[/bold red]", str(e))
     elif not logged_out_securely:
         console.print("[bold green]Session file no longer exists.[/bold green]")
 
@@ -246,62 +262,10 @@ def logout():
     """
     Log out from Telegram and delete the session file securely from the server.
     """
-    async def logout_flow():
-        if not typer.confirm(
-            "Are you sure you want to log out and delete the session file?"
-        ):
-            return
+    if not typer.confirm("Are you sure you want to log out and delete the session file?"):
+        return
 
-        session_file = f"{settings.SESSION_NAME}.session"
-        client = TelegramClient(settings.SESSION_NAME, settings.API_ID, settings.API_HASH)
-
-    async def secure_logout():
-        session_file = f"{settings.SESSION_NAME}.session"
-        if not os.path.exists(session_file):
-            console.print("[yellow]No active session found.[/yellow]")
-            return
-
-        api_id = settings.API_ID
-        api_hash = settings.API_HASH
-
-        if not api_id or api_id == 0 or not api_hash or api_hash == "placeholder":
-            # Can't connect without credentials, fallback to simple file deletion
-            try:
-                os.remove(session_file)
-                console.print("[bold green]Local session file deleted (missing credentials for server logout).[/bold green]")
-            except Exception as e:
-                console.print(f"[bold red]Failed to delete local session file:[/bold red] {e}")
-            return
-
-        client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
-
-        console.print("[bold blue]Connecting to Telegram to revoke session...[/bold blue]")
-        try:
-            await client.connect()
-            if await client.is_user_authorized():
-                await client.log_out()
-                console.print(
-                    "[bold green]Successfully logged out and session token revoked.[/bold green]"
-                )
-            else:
-                console.print("[yellow]No active server-side session found.[/yellow]")
-        except Exception as e:
-            console.print("[bold red]Failed to communicate with Telegram server:[/bold red]", str(e))
-        finally:
-            await client.disconnect()
-
-        # Fallback to local deletion
-        if os.path.exists(session_file):
-            try:
-                os.remove(session_file)
-                console.print(
-                    "[bold green]Local session file deleted.[/bold green]"
-                )
-            except Exception as e:
-                console.print("[bold red]Failed to delete session file:[/bold red]", str(e))
-
-    asyncio.run(logout_flow())
-
+    asyncio.run(_logout_flow())
 
 
 @app.command()
