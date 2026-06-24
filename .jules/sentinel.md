@@ -73,3 +73,8 @@
 **Vulnerability:** Local deletion of Telethon `.session` files without severing the server-side connection left active tokens that could still be exploited if previously exfiltrated.
 **Learning:** Calling `os.remove()` on a session file is insufficient. Telethon sessions must be invalidated on the Telegram server via `await client.log_out()` to securely revoke credentials.
 **Prevention:** Always prioritize server-side token revocation and properly release file handles (`await client.disconnect()`) before attempting local cleanup.
+
+## 2024-06-23 - File Extension Blocklist Bypass via Unicode Control Characters
+**Vulnerability:** A TOCTOU (Time-of-Check to Time-of-Use) bypass existed where `is_suspicious` validated file extensions without stripping Unicode control characters (e.g., `\u200b`). The extension was extracted as `.exe\u200b`, bypassing the blocklist. Later, `sanitize_filename` stripped control characters when resolving the file path, ultimately saving a malicious executable on disk (`evil.exe`).
+**Learning:** Any input validation logic that analyzes file names must strictly perform the same sanitization (e.g., stripping control characters and trimming whitespaces) as the downstream functions that use the filename. Checking extensions before the filename is finalized opens up severe bypass vectors.
+**Prevention:** Always normalize and sanitize input completely (strip control characters, remove whitespace, and normalize path structures) *before* performing security-sensitive logic like checking blocklists.
