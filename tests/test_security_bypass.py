@@ -22,3 +22,12 @@ def test_is_suspicious_control_char_security_bypass_cases():
         assert sanitized in {"evil.exe", "evil.bat", "evil.sh"}, (
             f"Sanitization mismatch for {filename!r}"
         )
+
+
+def test_is_suspicious_normalizes_control_char_malware_examples():
+    # PR #69 specifically documented null-byte and newline examples.
+    for filename in ["malware.exe\x00", "malware.exe\n"]:
+        suspicious, ext = is_suspicious(filename)
+        assert suspicious is True
+        assert ext == ".exe"
+        assert sanitize_filename(filename) == "malware.exe"
