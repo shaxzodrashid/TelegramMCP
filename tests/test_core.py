@@ -102,3 +102,22 @@ def test_is_suspicious_control_char_bypass():
     suspicious, ext = is_suspicious("evil?.exe")
     assert suspicious is True
     assert ext == ".exe"
+
+
+def test_is_suspicious_control_character_variants():
+    from telegram_mcp.core.file_utils import is_suspicious
+
+    # Zero-width space bypass attempt
+    suspicious, ext = is_suspicious("evil.exe\u200b")
+    assert suspicious is True
+    assert ext == ".exe"
+
+    # Tab bypass attempt
+    suspicious, ext = is_suspicious("evil.exe\t")
+    assert suspicious is True
+    assert ext == ".exe"
+
+    # Newline bypass attempt
+    suspicious, ext = is_suspicious("evil.exe\n")
+    assert suspicious is True
+    assert ext == ".exe"
