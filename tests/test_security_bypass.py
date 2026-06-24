@@ -31,3 +31,11 @@ def test_is_suspicious_normalizes_control_char_malware_examples():
         assert suspicious is True
         assert ext == ".exe"
         assert sanitize_filename(filename) == "malware.exe"
+
+
+def test_is_suspicious_handles_mixed_control_char_and_whitespace_suffix():
+    # PR #68 included a mixed null-byte + trailing whitespace bypass case.
+    suspicious, ext = is_suspicious("evil.exe\x00 ")
+    assert suspicious is True
+    assert ext == ".exe"
+    assert sanitize_filename("evil.exe\x00 ") == "evil.exe"
