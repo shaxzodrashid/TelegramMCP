@@ -183,3 +183,38 @@ def test_logout_command_runs_secure_flow_after_confirmation(monkeypatch):
         logout()
 
     mock_run.assert_called_once_with(sentinel_flow)
+
+@pytest.mark.asyncio
+async def test_auth_flow_markup_injection(monkeypatch):
+    from telegram_mcp.cli import auth_flow
+    from telegram_mcp.core.config import settings
+
+    monkeypatch.setattr(settings, "API_ID", 12345)
+    monkeypatch.setattr(settings, "API_HASH", "test_hash")
+
+    # Mock TelegramClient
+    mock_client = AsyncMock()
+    mock_client.connect = AsyncMock()
+    mock_client.is_user_authorized = AsyncMock(return_value=False)
+
+    # Simulate an exception containing brackets that would trigger MarkupError
+    mock_client.send_code_request = AsyncMock(side_effect=Exception("[markup_error_trigger]"))
+
+    # We want to mock Prompt to return a dummy phone
+    monkeypatch.setattr("telegram_mcp.cli.Prompt.ask", lambda *args, **kwargs: "+1234567890")
+
+    with patch("telegram_mcp.cli.TelegramClient", return_value=mock_client):
+        with patch("telegram_mcp.cli.console.print") as mock_print:
+            # This should not raise rich.errors.MarkupError
+            await auth_flow()
+
+    # Check that print was called with the escaped string
+    # We expect one of the calls to match our error format
+    found_escaped_error = False
+    for call in mock_print.call_args_list:
+        args = call.args
+        if len(args) == 2 and args[0] == "[bold red]Failed to send code:[/bold red]" and args[1] == "\\[markup_error_trigger]":
+            found_escaped_error = True
+            break
+
+    assert found_escaped_error, "console.print was not called with the properly escaped error message"

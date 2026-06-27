@@ -4,6 +4,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
+from rich.markup import escape
 from telethon import TelegramClient
 from .core.config import settings
 from .core.logger import logger
@@ -104,7 +105,10 @@ async def auth_flow():
         try:
             await client.send_code_request(phone)
         except Exception as e:
-            console.print("[bold red]Failed to send code:[/bold red]", str(e))
+            # SECURITY: Use escape() to prevent Markup Injection. If the exception message
+            # contains brackets (e.g. `[error]`), rich will attempt to parse it as markup,
+            # which could crash the CLI with a MarkupError.
+            console.print("[bold red]Failed to send code:[/bold red]", escape(str(e)))
             return
 
         code = Prompt.ask("Enter the code you received", password=True)
@@ -123,11 +127,11 @@ async def auth_flow():
                     await client.sign_in(password=password)
                 except Exception as e2:
                     console.print(
-                        "[bold red]Password verification failed:[/bold red]", str(e2)
+                        "[bold red]Password verification failed:[/bold red]", escape(str(e2))
                     )
                     return
             else:
-                console.print("[bold red]Authentication failed:[/bold red]", str(e))
+                console.print("[bold red]Authentication failed:[/bold red]", escape(str(e)))
                 return
 
     me = await client.get_me()
@@ -172,7 +176,7 @@ def status():
                     )
                 )
         except Exception as e:
-            console.print("[bold red]Error checking status:[/bold red]", str(e))
+            console.print("[bold red]Error checking status:[/bold red]", escape(str(e)))
         finally:
             await telegram_service.stop()
 
@@ -222,7 +226,7 @@ async def _logout_flow():
                 "[bold green]Local session file deleted (missing credentials for server logout).[/bold green]"
             )
         except OSError as e:
-            console.print("[bold red]Failed to delete local session file:[/bold red]", str(e))
+            console.print("[bold red]Failed to delete local session file:[/bold red]", escape(str(e)))
         return
 
     client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
@@ -243,7 +247,7 @@ async def _logout_flow():
         logger.warning(
             "Could not revoke server-side session, falling back to local deletion: {}", e
         )
-        console.print("[bold red]Failed to communicate with Telegram server:[/bold red]", str(e))
+        console.print("[bold red]Failed to communicate with Telegram server:[/bold red]", escape(str(e)))
     finally:
         await client.disconnect()
 
@@ -252,7 +256,7 @@ async def _logout_flow():
             os.remove(session_file)
             console.print("[bold green]Local session file deleted.[/bold green]")
         except OSError as e:
-            console.print("[bold red]Failed to delete session file:[/bold red]", str(e))
+            console.print("[bold red]Failed to delete session file:[/bold red]", escape(str(e)))
     elif not logged_out_securely:
         console.print("[bold green]Session file no longer exists.[/bold green]")
 
