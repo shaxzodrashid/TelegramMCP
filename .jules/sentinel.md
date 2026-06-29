@@ -78,3 +78,8 @@
 **Vulnerability:** A TOCTOU (Time-of-Check to Time-of-Use) bypass existed where `is_suspicious` validated file extensions without stripping Unicode control characters (e.g., `\u200b`). The extension was extracted as `.exe\u200b`, bypassing the blocklist. Later, `sanitize_filename` stripped control characters when resolving the file path, ultimately saving a malicious executable on disk (`evil.exe`).
 **Learning:** Any input validation logic that analyzes file names must strictly perform the same sanitization (e.g., stripping control characters and trimming whitespaces) as the downstream functions that use the filename. Checking extensions before the filename is finalized opens up severe bypass vectors.
 **Prevention:** Always normalize and sanitize input completely (strip control characters, remove whitespace, and normalize path structures) *before* performing security-sensitive logic like checking blocklists.
+
+## 2024-06-28 - Rich Markup Injection in CLI Error Handling
+**Vulnerability:** The CLI commands used `rich` to print error messages (e.g. `console.print("[bold red]Error:[/bold red]", str(e))`). Untrusted strings or external exception messages that contained bracket characters (like `[/]`) were parsed as valid markup, throwing `MarkupError` and crashing the application.
+**Learning:** `rich.console.Console` evaluates all positional string arguments for markup tags by default. This makes any unescaped string, especially exception details sourced externally, an injection vector for markup parser crashes.
+**Prevention:** Always wrap untrusted or dynamic strings with `rich.markup.escape()` before passing them to `console.print()` or use methods that explicitly disable markup parsing for those strings.

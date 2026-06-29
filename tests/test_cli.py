@@ -183,3 +183,30 @@ def test_logout_command_runs_secure_flow_after_confirmation(monkeypatch):
         logout()
 
     mock_run.assert_called_once_with(sentinel_flow)
+
+@pytest.mark.asyncio
+async def test_logout_flow_handles_rich_markup_injection(tmp_path, monkeypatch):
+    from telegram_mcp.cli import _logout_flow
+    from telegram_mcp.core.config import settings
+    from rich.errors import MarkupError
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(settings, "SESSION_NAME", "test_logout_markup")
+    monkeypatch.setattr(settings, "API_ID", 12345)
+    monkeypatch.setattr(settings, "API_HASH", "test_hash")
+
+    session_file = tmp_path / "test_logout_markup.session"
+    session_file.write_text("dummy")
+
+    mock_client = AsyncMock()
+    # Provide an exception with a string that triggers MarkupError if unescaped
+    mock_client.connect.side_effect = Exception("Network Error [/]")
+
+    with patch("telegram_mcp.cli.TelegramClient", return_value=mock_client):
+        try:
+            await _logout_flow()
+        except MarkupError:
+            pytest.fail("MarkupError was raised. Exception message was not properly escaped.")
+
+    mock_client.connect.assert_called_once()
+    assert not session_file.exists()
