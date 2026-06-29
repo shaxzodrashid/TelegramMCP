@@ -114,9 +114,14 @@ def get_safe_path(base_dir: str, sub_dir: str | None, filename: str) -> Path:
         # Sanitize sub_dir to prevent traversal
         # We only allow relative subdirectories within the base
         clean_sub = Path(sub_dir).parts
-        # Filter out '..' and empty parts
+        # Filter out '..', empty parts, absolute roots, and Windows drive/path escapes
         clean_sub = [
-            p for p in clean_sub if p not in ("..", ".", "") and not p.startswith("/")
+            p
+            for p in clean_sub
+            if p not in ("..", ".", "")
+            and not p.startswith("/")
+            and not p.endswith("\\")
+            and ":" not in p
         ]
         target_dir = base.joinpath(*clean_sub)
     else:
