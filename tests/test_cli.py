@@ -210,3 +210,65 @@ async def test_logout_flow_handles_rich_markup_injection(tmp_path, monkeypatch):
 
     mock_client.connect.assert_called_once()
     assert not session_file.exists()
+
+
+@pytest.mark.asyncio
+async def test_auth_flow_handles_rich_markup_injection_in_profile(tmp_path, monkeypatch):
+    from telegram_mcp.cli import auth_flow
+    from rich.errors import MarkupError
+
+    monkeypatch.chdir(tmp_path)
+
+    with patch("telegram_mcp.cli.TelegramClient") as mock_client_cls, \
+         patch("telegram_mcp.cli.Prompt.ask", side_effect=["123", "hash", "phone", "code"]):
+
+        mock_client = AsyncMock()
+        mock_client.is_user_authorized.return_value = True
+
+        # Inject markup via first_name
+        mock_me = AsyncMock()
+        mock_me.first_name = "[/bold]"
+        mock_me.username = "test"
+        mock_me.id = 123
+        mock_client.get_me.return_value = mock_me
+
+        mock_client_cls.return_value = mock_client
+
+        try:
+            await auth_flow()
+        except MarkupError:
+            pytest.fail("MarkupError was raised during auth_flow. Dynamic fields were not properly escaped.")
+
+
+def test_status_command_handles_rich_markup_injection_in_profile():
+    from telegram_mcp.cli import status
+    from rich.errors import MarkupError
+
+    class MockUser:
+        def __init__(self):
+            self.first_name = "[/bold]"
+            self.username = "test"
+            self.id = 123
+
+    with patch("telegram_mcp.cli.telegram_service") as mock_service:
+        mock_service.get_me = AsyncMock(return_value=MockUser())
+        mock_service.stop = AsyncMock()
+
+        try:
+            status()
+        except MarkupError:
+            pytest.fail("MarkupError was raised during status check. Dynamic fields were not properly escaped.")
+
+def test_config_command_handles_rich_markup_injection(monkeypatch):
+    from telegram_mcp.cli import config
+    from telegram_mcp.core.config import settings
+    from rich.errors import MarkupError
+
+    monkeypatch.setattr(settings, "SERVER_NAME", "Test[/bold]Server")
+    monkeypatch.setattr(settings, "SESSION_NAME", "test[/blue]")
+    monkeypatch.setattr(settings, "SERVER_VERSION", "1.0[/]")
+
+    try:
+        config()
+    except MarkupError:
+        pytest.fail("MarkupError was raised during config display. Settings values were not properly escaped.")
