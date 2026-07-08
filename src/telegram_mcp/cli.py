@@ -132,8 +132,10 @@ async def auth_flow():
                 return
 
     me = await client.get_me()
+    safe_first_name = escape(str(me.first_name or ""))
+    safe_username = escape(str(me.username or "N/A"))
     console.print(
-        f"\n[bold green]Successfully authenticated as {me.first_name} (@{me.username or 'N/A'}) [ID: {me.id}][/bold green]"
+        f"\n[bold green]Successfully authenticated as {safe_first_name} (@{safe_username}) [ID: {me.id}][/bold green]"
     )
     await client.disconnect()
 
@@ -156,10 +158,12 @@ def status():
         try:
             me = await telegram_service.get_me()
             if me:
+                safe_first_name = escape(str(me.first_name or ""))
+                safe_username = escape(str(me.username or "N/A"))
                 console.print(
                     Panel(
                         f"[bold green]Authenticated[/bold green]\n"
-                        f"User: {me.first_name} (@{me.username or 'N/A'})\n"
+                        f"User: {safe_first_name} (@{safe_username})\n"
                         f"ID: {me.id}",
                         title="Telegram Status",
                     )
