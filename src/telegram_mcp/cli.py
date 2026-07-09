@@ -132,8 +132,10 @@ async def auth_flow():
                 return
 
     me = await client.get_me()
+    first_name_esc = escape(me.first_name) if me.first_name else ""
+    username_esc = escape(me.username) if me.username else "N/A"
     console.print(
-        f"\n[bold green]Successfully authenticated as {me.first_name} (@{me.username or 'N/A'}) [ID: {me.id}][/bold green]"
+        f"\n[bold green]Successfully authenticated as {first_name_esc} (@{username_esc}) [ID: {me.id}][/bold green]"
     )
     await client.disconnect()
 
@@ -156,10 +158,12 @@ def status():
         try:
             me = await telegram_service.get_me()
             if me:
+                first_name_esc = escape(me.first_name) if me.first_name else ""
+                username_esc = escape(me.username) if me.username else "N/A"
                 console.print(
                     Panel(
                         f"[bold green]Authenticated[/bold green]\n"
-                        f"User: {me.first_name} (@{me.username or 'N/A'})\n"
+                        f"User: {first_name_esc} (@{username_esc})\n"
                         f"ID: {me.id}",
                         title="Telegram Status",
                     )
@@ -197,10 +201,10 @@ def config():
             f"[bold blue]Telegram Credentials[/bold blue]\n"
             f"API_ID: {api_id_display}\n"
             f"API_HASH: {api_hash_display}\n"
-            f"SESSION_NAME: {settings.SESSION_NAME}\n\n"
+            f"SESSION_NAME: {escape(settings.SESSION_NAME)}\n\n"
             f"[bold blue]Server Settings[/bold blue]\n"
-            f"SERVER_NAME: {settings.SERVER_NAME}\n"
-            f"VERSION: {settings.SERVER_VERSION}\n"
+            f"SERVER_NAME: {escape(settings.SERVER_NAME)}\n"
+            f"VERSION: {escape(settings.SERVER_VERSION)}\n"
             f"DEBUG: {settings.DEBUG}",
             title="Current Configuration",
         )
