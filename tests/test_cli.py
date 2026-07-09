@@ -210,3 +210,67 @@ async def test_logout_flow_handles_rich_markup_injection(tmp_path, monkeypatch):
 
     mock_client.connect.assert_called_once()
     assert not session_file.exists()
+
+
+@pytest.mark.asyncio
+async def test_auth_flow_handles_rich_markup_injection(monkeypatch, tmp_path):
+    from telegram_mcp.cli import auth_flow
+    from telegram_mcp.core.config import settings
+    from rich.errors import MarkupError
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(settings, "API_ID", 123)
+    monkeypatch.setattr(settings, "API_HASH", "hash")
+
+    mock_client = AsyncMock()
+    mock_client.is_user_authorized.return_value = True
+
+    mock_me = AsyncMock()
+    mock_me.first_name = "User [/bold]"
+    mock_me.username = "user [red]"
+    mock_me.id = 1
+
+    mock_client.get_me.return_value = mock_me
+
+    with patch("telegram_mcp.cli.TelegramClient", return_value=mock_client):
+        try:
+            await auth_flow()
+        except MarkupError:
+            pytest.fail("MarkupError was raised during auth_flow due to unescaped user profile")
+
+    mock_client.get_me.assert_called_once()
+
+
+def test_status_command_handles_rich_markup_injection(monkeypatch, tmp_path):
+    from telegram_mcp.cli import status
+    from rich.errors import MarkupError
+
+    monkeypatch.chdir(tmp_path)
+
+    mock_me = AsyncMock()
+    mock_me.first_name = "User [/bold]"
+    mock_me.username = "user [red]"
+    mock_me.id = 1
+
+    with patch("telegram_mcp.cli.telegram_service.get_me", new=AsyncMock(return_value=mock_me)):
+        with patch("telegram_mcp.cli.telegram_service.stop", new=AsyncMock()):
+            try:
+                status()
+            except MarkupError:
+                pytest.fail("MarkupError was raised during status due to unescaped user profile")
+
+
+def test_config_command_handles_rich_markup_injection(monkeypatch, tmp_path):
+    from telegram_mcp.cli import config
+    from telegram_mcp.core.config import settings
+    from rich.errors import MarkupError
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(settings, "SESSION_NAME", "session [/blue]")
+    monkeypatch.setattr(settings, "SERVER_NAME", "server [/yellow]")
+    monkeypatch.setattr(settings, "SERVER_VERSION", "v1.0 [/bold]")
+
+    try:
+        config()
+    except MarkupError:
+        pytest.fail("MarkupError was raised during config due to unescaped settings")
