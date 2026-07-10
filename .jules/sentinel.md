@@ -83,3 +83,8 @@
 **Vulnerability:** The CLI commands used `rich` to print error messages (e.g. `console.print("[bold red]Error:[/bold red]", str(e))`). Untrusted strings or external exception messages that contained bracket characters (like `[/]`) were parsed as valid markup, throwing `MarkupError` and crashing the application.
 **Learning:** `rich.console.Console` evaluates all positional string arguments for markup tags by default. This makes any unescaped string, especially exception details sourced externally, an injection vector for markup parser crashes.
 **Prevention:** Always wrap untrusted or dynamic strings with `rich.markup.escape()` before passing them to `console.print()` or use methods that explicitly disable markup parsing for those strings.
+
+## 2024-07-10 - Rich CLI Markup Injection
+**Vulnerability:** The CLI commands printed user-controlled fields (`first_name`, `username`) using `rich` console panels and string interpolation without escaping the variables.
+**Learning:** `rich` library processes markup tags (e.g. `[bold]`) in interpolated string inputs by default. If external input containing unescaped markup is rendered via `console.print()`, it causes a `MarkupError` crash or enables malicious markup injection.
+**Prevention:** Always wrap untrusted variables with `rich.markup.escape()` before interpolating them into a string or passing them to `Console.print` or `Panel` methods.
