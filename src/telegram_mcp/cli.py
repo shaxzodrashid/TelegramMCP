@@ -124,16 +124,20 @@ async def auth_flow():
                     await client.sign_in(password=password)
                 except Exception as e2:
                     console.print(
-                        "[bold red]Password verification failed:[/bold red]", escape(str(e2))
+                        "[bold red]Password verification failed:[/bold red]",
+                        escape(str(e2)),
                     )
                     return
             else:
-                console.print("[bold red]Authentication failed:[/bold red]", escape(str(e)))
+                console.print(
+                    "[bold red]Authentication failed:[/bold red]", escape(str(e))
+                )
                 return
 
     me = await client.get_me()
+    # Prevent Rich markup injection from untrusted user data
     console.print(
-        f"\n[bold green]Successfully authenticated as {me.first_name} (@{me.username or 'N/A'}) [ID: {me.id}][/bold green]"
+        f"\n[bold green]Successfully authenticated as {escape(me.first_name or '')} (@{escape(me.username or 'N/A')}) [ID: {escape(str(me.id))}][/bold green]"
     )
     await client.disconnect()
 
@@ -156,15 +160,17 @@ def status():
         try:
             me = await telegram_service.get_me()
             if me:
+                # Prevent Rich markup injection from untrusted user data
                 console.print(
                     Panel(
                         f"[bold green]Authenticated[/bold green]\n"
-                        f"User: {me.first_name} (@{me.username or 'N/A'})\n"
-                        f"ID: {me.id}",
+                        f"User: {escape(me.first_name or '')} (@{escape(me.username or 'N/A')})\n"
+                        f"ID: {escape(str(me.id))}",
                         title="Telegram Status",
                     )
                 )
             else:
+                # Prevent Rich markup injection from untrusted user data
                 console.print(
                     Panel(
                         "[bold red]Not authenticated[/bold red]\n"
@@ -192,15 +198,16 @@ def config():
         str(settings.API_ID) if settings.API_ID != 0 else "[red]Not set[/red]"
     )
 
+    # Prevent Rich markup injection from configuration values
     console.print(
         Panel(
             f"[bold blue]Telegram Credentials[/bold blue]\n"
             f"API_ID: {api_id_display}\n"
             f"API_HASH: {api_hash_display}\n"
-            f"SESSION_NAME: {settings.SESSION_NAME}\n\n"
+            f"SESSION_NAME: {escape(settings.SESSION_NAME)}\n\n"
             f"[bold blue]Server Settings[/bold blue]\n"
-            f"SERVER_NAME: {settings.SERVER_NAME}\n"
-            f"VERSION: {settings.SERVER_VERSION}\n"
+            f"SERVER_NAME: {escape(settings.SERVER_NAME)}\n"
+            f"VERSION: {escape(settings.SERVER_VERSION)}\n"
             f"DEBUG: {settings.DEBUG}",
             title="Current Configuration",
         )
@@ -223,7 +230,10 @@ async def _logout_flow():
                 "[bold green]Local session file deleted (missing credentials for server logout).[/bold green]"
             )
         except OSError as e:
-            console.print("[bold red]Failed to delete local session file:[/bold red]", escape(str(e)))
+            console.print(
+                "[bold red]Failed to delete local session file:[/bold red]",
+                escape(str(e)),
+            )
         return
 
     client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
@@ -242,9 +252,13 @@ async def _logout_flow():
             console.print("[yellow]No active server-side session found.[/yellow]")
     except Exception as e:
         logger.warning(
-            "Could not revoke server-side session, falling back to local deletion: {}", e
+            "Could not revoke server-side session, falling back to local deletion: {}",
+            e,
         )
-        console.print("[bold red]Failed to communicate with Telegram server:[/bold red]", escape(str(e)))
+        console.print(
+            "[bold red]Failed to communicate with Telegram server:[/bold red]",
+            escape(str(e)),
+        )
     finally:
         await client.disconnect()
 
@@ -253,7 +267,9 @@ async def _logout_flow():
             os.remove(session_file)
             console.print("[bold green]Local session file deleted.[/bold green]")
         except OSError as e:
-            console.print("[bold red]Failed to delete session file:[/bold red]", escape(str(e)))
+            console.print(
+                "[bold red]Failed to delete session file:[/bold red]", escape(str(e))
+            )
     elif not logged_out_securely:
         console.print("[bold green]Session file no longer exists.[/bold green]")
 
@@ -263,7 +279,9 @@ def logout():
     """
     Log out from Telegram and delete the session file securely from the server.
     """
-    if not typer.confirm("Are you sure you want to log out and delete the session file?"):
+    if not typer.confirm(
+        "Are you sure you want to log out and delete the session file?"
+    ):
         return
 
     asyncio.run(_logout_flow())
