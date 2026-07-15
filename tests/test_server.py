@@ -2,12 +2,19 @@ import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
 from telegram_mcp.server import get_account_info, list_chats
-from telegram_mcp.models.chats import ChatType, ListChatsInput, ListChatsResult, ListChatsMeta
+from telegram_mcp.models.chats import (
+    ChatType,
+    ListChatsInput,
+    ListChatsResult,
+    ListChatsMeta,
+)
+
 
 @pytest.fixture
 def mock_telegram_service():
-    with patch('telegram_mcp.server.telegram_service') as mock:
+    with patch("telegram_mcp.server.telegram_service") as mock:
         yield mock
+
 
 @pytest.mark.asyncio
 async def test_get_account_info_success(mock_telegram_service):
@@ -22,6 +29,7 @@ async def test_get_account_info_success(mock_telegram_service):
     result = await get_account_info()
     assert result == "Logged in as: John (@johndoe) [ID: 12345]"
 
+
 @pytest.mark.asyncio
 async def test_get_account_info_success_no_username(mock_telegram_service):
     # Mock user
@@ -35,12 +43,17 @@ async def test_get_account_info_success_no_username(mock_telegram_service):
     result = await get_account_info()
     assert result == "Logged in as: John (@N/A) [ID: 12345]"
 
+
 @pytest.mark.asyncio
 async def test_get_account_info_not_logged_in(mock_telegram_service):
     mock_telegram_service.get_me = AsyncMock(return_value=None)
 
     result = await get_account_info()
-    assert result == "Not logged in to Telegram. Use the 'telegram-mcp auth' command to authenticate."
+    assert (
+        result
+        == "Not logged in to Telegram. Use the 'telegram-mcp auth' command to authenticate."
+    )
+
 
 @pytest.mark.asyncio
 async def test_get_account_info_exception(mock_telegram_service):
@@ -49,11 +62,19 @@ async def test_get_account_info_exception(mock_telegram_service):
     result = await get_account_info()
     assert result == "An error occurred while getting account info."
 
+
 @pytest.mark.asyncio
 async def test_list_chats_success(mock_telegram_service):
     expected_result = ListChatsResult(
         data=[],
-        meta=ListChatsMeta(total_returned=0, limit=50, offset=0, search=None, type_filters=None, has_more=False)
+        meta=ListChatsMeta(
+            total_returned=0,
+            limit=50,
+            offset=0,
+            search=None,
+            type_filters=None,
+            has_more=False,
+        ),
     )
     mock_telegram_service.list_chats = AsyncMock(return_value=expected_result)
 
@@ -69,11 +90,19 @@ async def test_list_chats_success(mock_telegram_service):
     assert args.offset == 0
     assert args.include_archived is False
 
+
 @pytest.mark.asyncio
 async def test_list_chats_with_filters(mock_telegram_service):
     expected_result = ListChatsResult(
         data=[],
-        meta=ListChatsMeta(total_returned=0, limit=10, offset=5, search="test", type_filters=[ChatType.user, ChatType.group], has_more=False)
+        meta=ListChatsMeta(
+            total_returned=0,
+            limit=10,
+            offset=5,
+            search="test",
+            type_filters=[ChatType.user, ChatType.group],
+            has_more=False,
+        ),
     )
     mock_telegram_service.list_chats = AsyncMock(return_value=expected_result)
 
@@ -82,7 +111,7 @@ async def test_list_chats_with_filters(mock_telegram_service):
         type_filters=[ChatType.user, ChatType.group],
         limit=10,
         offset=5,
-        include_archived=True
+        include_archived=True,
     )
 
     assert result == expected_result
@@ -95,11 +124,19 @@ async def test_list_chats_with_filters(mock_telegram_service):
     assert args.offset == 5
     assert args.include_archived is True
 
+
 @pytest.mark.asyncio
 async def test_list_chats_search_trimming(mock_telegram_service):
     expected_result = ListChatsResult(
         data=[],
-        meta=ListChatsMeta(total_returned=0, limit=50, offset=0, search="test query", type_filters=None, has_more=False)
+        meta=ListChatsMeta(
+            total_returned=0,
+            limit=50,
+            offset=0,
+            search="test query",
+            type_filters=None,
+            has_more=False,
+        ),
     )
     mock_telegram_service.list_chats = AsyncMock(return_value=expected_result)
 
