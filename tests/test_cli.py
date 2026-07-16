@@ -210,3 +210,24 @@ async def test_logout_flow_handles_rich_markup_injection(tmp_path, monkeypatch):
 
     mock_client.connect.assert_called_once()
     assert not session_file.exists()
+
+def test_status_handles_rich_markup_injection(monkeypatch):
+    from telegram_mcp.cli import status
+    from rich.errors import MarkupError
+
+    mock_me = AsyncMock()
+    mock_me.first_name = "Hacked [/]"
+    mock_me.username = "[bold red]Admin[/bold red]"
+    mock_me.id = 12345
+
+    mock_telegram_service = AsyncMock()
+    mock_telegram_service.get_me.return_value = mock_me
+    mock_telegram_service.stop = AsyncMock()
+
+    monkeypatch.setattr("telegram_mcp.cli.telegram_service", mock_telegram_service)
+
+    try:
+        # Since status() calls asyncio.run(check_status()), we need to run it synchronously
+        status()
+    except MarkupError:
+        pytest.fail("MarkupError was raised. Profile fields were not properly escaped.")
