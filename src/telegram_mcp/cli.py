@@ -132,8 +132,10 @@ async def auth_flow():
                 return
 
     me = await client.get_me()
+    first_name_safe = escape(me.first_name or "")
+    username_safe = escape(me.username or "N/A")
     console.print(
-        f"\n[bold green]Successfully authenticated as {me.first_name} (@{me.username or 'N/A'}) [ID: {me.id}][/bold green]"
+        f"\n[bold green]Successfully authenticated as {first_name_safe} (@{username_safe}) [ID: {me.id}][/bold green]"
     )
     await client.disconnect()
 
@@ -156,10 +158,12 @@ def status():
         try:
             me = await telegram_service.get_me()
             if me:
+                first_name_safe = escape(me.first_name or "")
+                username_safe = escape(me.username or "N/A")
                 console.print(
                     Panel(
                         f"[bold green]Authenticated[/bold green]\n"
-                        f"User: {me.first_name} (@{me.username or 'N/A'})\n"
+                        f"User: {first_name_safe} (@{username_safe})\n"
                         f"ID: {me.id}",
                         title="Telegram Status",
                     )
@@ -192,15 +196,19 @@ def config():
         str(settings.API_ID) if settings.API_ID != 0 else "[red]Not set[/red]"
     )
 
+    session_name_safe = escape(str(settings.SESSION_NAME or ""))
+    server_name_safe = escape(str(settings.SERVER_NAME or ""))
+    server_version_safe = escape(str(settings.SERVER_VERSION or ""))
+
     console.print(
         Panel(
             f"[bold blue]Telegram Credentials[/bold blue]\n"
             f"API_ID: {api_id_display}\n"
             f"API_HASH: {api_hash_display}\n"
-            f"SESSION_NAME: {settings.SESSION_NAME}\n\n"
+            f"SESSION_NAME: {session_name_safe}\n\n"
             f"[bold blue]Server Settings[/bold blue]\n"
-            f"SERVER_NAME: {settings.SERVER_NAME}\n"
-            f"VERSION: {settings.SERVER_VERSION}\n"
+            f"SERVER_NAME: {server_name_safe}\n"
+            f"VERSION: {server_version_safe}\n"
             f"DEBUG: {settings.DEBUG}",
             title="Current Configuration",
         )
