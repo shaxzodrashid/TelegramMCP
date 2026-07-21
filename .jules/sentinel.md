@@ -83,3 +83,8 @@
 **Vulnerability:** The CLI commands used `rich` to print error messages (e.g. `console.print("[bold red]Error:[/bold red]", str(e))`). Untrusted strings or external exception messages that contained bracket characters (like `[/]`) were parsed as valid markup, throwing `MarkupError` and crashing the application.
 **Learning:** `rich.console.Console` evaluates all positional string arguments for markup tags by default. This makes any unescaped string, especially exception details sourced externally, an injection vector for markup parser crashes.
 **Prevention:** Always wrap untrusted or dynamic strings with `rich.markup.escape()` before passing them to `console.print()` or use methods that explicitly disable markup parsing for those strings.
+
+## 2024-06-29 - Rich Markup Injection in CLI Authenticate and Status
+**Vulnerability:** Similar to the previous MarkupError vulnerability in error handling, the CLI functions (`auth` and `status`) printed user profile information (`me.first_name` and `me.username`) using `rich.console.print` without escaping the values. If a user had bracket characters in their Telegram name or username (e.g., `[/]`), `rich` would parse it as markup and throw a `MarkupError`, crashing the CLI.
+**Learning:** `rich.console.Console` evaluates all positional string arguments for markup tags by default. This makes any unescaped string, especially those sourced externally (like user profiles), an injection vector for markup parser crashes.
+**Prevention:** Always wrap untrusted or dynamic strings with `rich.markup.escape()` before formatting them into strings passed to `console.print()`.
