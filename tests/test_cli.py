@@ -100,7 +100,9 @@ async def test_logout_flow_not_authorized_deletes_local_session(tmp_path, monkey
 
 
 @pytest.mark.asyncio
-async def test_logout_flow_exception_fallback_deletes_local_session(tmp_path, monkeypatch):
+async def test_logout_flow_exception_fallback_deletes_local_session(
+    tmp_path, monkeypatch
+):
     from telegram_mcp.cli import _logout_flow
     from telegram_mcp.core.config import settings
 
@@ -125,7 +127,9 @@ async def test_logout_flow_exception_fallback_deletes_local_session(tmp_path, mo
 
 
 @pytest.mark.asyncio
-async def test_logout_flow_missing_credentials_deletes_local_only(tmp_path, monkeypatch):
+async def test_logout_flow_missing_credentials_deletes_local_only(
+    tmp_path, monkeypatch
+):
     from telegram_mcp.cli import _logout_flow
     from telegram_mcp.core.config import settings
 
@@ -184,6 +188,7 @@ def test_logout_command_runs_secure_flow_after_confirmation(monkeypatch):
 
     mock_run.assert_called_once_with(sentinel_flow)
 
+
 @pytest.mark.asyncio
 async def test_logout_flow_handles_rich_markup_injection(tmp_path, monkeypatch):
     from telegram_mcp.cli import _logout_flow
@@ -206,7 +211,57 @@ async def test_logout_flow_handles_rich_markup_injection(tmp_path, monkeypatch):
         try:
             await _logout_flow()
         except MarkupError:
-            pytest.fail("MarkupError was raised. Exception message was not properly escaped.")
+            pytest.fail(
+                "MarkupError was raised. Exception message was not properly escaped."
+            )
 
     mock_client.connect.assert_called_once()
     assert not session_file.exists()
+
+
+@pytest.mark.asyncio
+async def test_auth_flow_handles_rich_markup_injection(tmp_path, monkeypatch):
+    import telegram_mcp.cli as cli
+    from telethon.types import User
+    from rich.errors import MarkupError
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(cli.settings, "API_ID", 12345)
+    monkeypatch.setattr(cli.settings, "API_HASH", "test_hash")
+
+    mock_client = AsyncMock()
+    mock_client.connect = AsyncMock()
+    mock_client.is_user_authorized = AsyncMock(return_value=True)
+    mock_client.disconnect = AsyncMock()
+
+    # User with a first_name that will trigger MarkupError if not escaped
+    mock_me = User(id=12345, is_self=True, first_name="[/world]", username="[red]test")
+    mock_client.get_me = AsyncMock(return_value=mock_me)
+
+    with patch("telegram_mcp.cli.TelegramClient", return_value=mock_client):
+        try:
+            await cli.auth_flow()
+        except MarkupError:
+            pytest.fail(
+                "MarkupError was raised. Profile details were not properly escaped in auth_flow."
+            )
+
+
+def test_status_handles_rich_markup_injection(monkeypatch):
+    import telegram_mcp.cli as cli
+    from telethon.types import User
+    from rich.errors import MarkupError
+
+    # User with a first_name that will trigger MarkupError if not escaped
+    mock_me = User(id=12345, is_self=True, first_name="[/world]", username="[red]test")
+
+    with patch("telegram_mcp.cli.telegram_service") as mock_service:
+        mock_service.get_me = AsyncMock(return_value=mock_me)
+        mock_service.stop = AsyncMock()
+
+        try:
+            cli.status()
+        except MarkupError:
+            pytest.fail(
+                "MarkupError was raised. Profile details were not properly escaped in status."
+            )
