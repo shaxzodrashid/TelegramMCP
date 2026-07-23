@@ -124,16 +124,21 @@ async def auth_flow():
                     await client.sign_in(password=password)
                 except Exception as e2:
                     console.print(
-                        "[bold red]Password verification failed:[/bold red]", escape(str(e2))
+                        "[bold red]Password verification failed:[/bold red]",
+                        escape(str(e2)),
                     )
                     return
             else:
-                console.print("[bold red]Authentication failed:[/bold red]", escape(str(e)))
+                console.print(
+                    "[bold red]Authentication failed:[/bold red]", escape(str(e))
+                )
                 return
 
     me = await client.get_me()
+    safe_first_name = escape(str(me.first_name or ""))
+    safe_username = escape(str(me.username or "N/A"))
     console.print(
-        f"\n[bold green]Successfully authenticated as {me.first_name} (@{me.username or 'N/A'}) [ID: {me.id}][/bold green]"
+        f"\n[bold green]Successfully authenticated as {safe_first_name} (@{safe_username}) [ID: {me.id}][/bold green]"
     )
     await client.disconnect()
 
@@ -156,10 +161,12 @@ def status():
         try:
             me = await telegram_service.get_me()
             if me:
+                safe_first_name = escape(str(me.first_name or ""))
+                safe_username = escape(str(me.username or "N/A"))
                 console.print(
                     Panel(
                         f"[bold green]Authenticated[/bold green]\n"
-                        f"User: {me.first_name} (@{me.username or 'N/A'})\n"
+                        f"User: {safe_first_name} (@{safe_username})\n"
                         f"ID: {me.id}",
                         title="Telegram Status",
                     )
@@ -223,7 +230,10 @@ async def _logout_flow():
                 "[bold green]Local session file deleted (missing credentials for server logout).[/bold green]"
             )
         except OSError as e:
-            console.print("[bold red]Failed to delete local session file:[/bold red]", escape(str(e)))
+            console.print(
+                "[bold red]Failed to delete local session file:[/bold red]",
+                escape(str(e)),
+            )
         return
 
     client = TelegramClient(settings.SESSION_NAME, api_id, api_hash)
@@ -242,9 +252,13 @@ async def _logout_flow():
             console.print("[yellow]No active server-side session found.[/yellow]")
     except Exception as e:
         logger.warning(
-            "Could not revoke server-side session, falling back to local deletion: {}", e
+            "Could not revoke server-side session, falling back to local deletion: {}",
+            e,
         )
-        console.print("[bold red]Failed to communicate with Telegram server:[/bold red]", escape(str(e)))
+        console.print(
+            "[bold red]Failed to communicate with Telegram server:[/bold red]",
+            escape(str(e)),
+        )
     finally:
         await client.disconnect()
 
@@ -253,7 +267,9 @@ async def _logout_flow():
             os.remove(session_file)
             console.print("[bold green]Local session file deleted.[/bold green]")
         except OSError as e:
-            console.print("[bold red]Failed to delete session file:[/bold red]", escape(str(e)))
+            console.print(
+                "[bold red]Failed to delete session file:[/bold red]", escape(str(e))
+            )
     elif not logged_out_securely:
         console.print("[bold green]Session file no longer exists.[/bold green]")
 
@@ -263,7 +279,9 @@ def logout():
     """
     Log out from Telegram and delete the session file securely from the server.
     """
-    if not typer.confirm("Are you sure you want to log out and delete the session file?"):
+    if not typer.confirm(
+        "Are you sure you want to log out and delete the session file?"
+    ):
         return
 
     asyncio.run(_logout_flow())
