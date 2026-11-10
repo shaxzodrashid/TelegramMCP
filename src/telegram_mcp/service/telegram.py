@@ -113,7 +113,9 @@ class TelegramService:
             all_summaries = []
 
             # 2. Process and filter dialogs
-            search_query = input_data.search.strip().lower() if input_data.search else None
+            search_query = (
+                input_data.search.strip().lower() if input_data.search else None
+            )
 
             for dialog in dialogs:
                 # Early filter: Archive (cheapest check)
@@ -124,7 +126,9 @@ class TelegramService:
                 chat_type = self._map_entity_to_chat_type(entity)
 
                 # Early filter: Type (if known from entity mapping)
-                if chat_type is None or (input_data.type_filters and chat_type not in input_data.type_filters):
+                if chat_type is None or (
+                    input_data.type_filters and chat_type not in input_data.type_filters
+                ):
                     continue
 
                 # Early filter: Search

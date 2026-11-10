@@ -5,9 +5,11 @@ from telethon import types
 from telegram_mcp.models.chats import ListChatsInput, ChatType
 from telegram_mcp.service.telegram import TelegramService
 
+
 @pytest.fixture
 def telegram_service():
     return TelegramService()
+
 
 def test_list_chats_input_validation():
     # Default input works
@@ -33,6 +35,7 @@ def test_list_chats_input_validation():
     # Extra fields rejected
     with pytest.raises(ValidationError):
         ListChatsInput(extra_field="rejected")
+
 
 def test_get_entity_title(telegram_service):
     # User with first and last name
@@ -114,13 +117,14 @@ async def test_map_entity_to_chat_type(telegram_service):
     supergroup.broadcast = False
     assert telegram_service._map_entity_to_chat_type(supergroup) == ChatType.supergroup
 
+
 @pytest.mark.asyncio
 async def test_list_chats_filtering(telegram_service):
     # Mock Telethon client and dialogs
     telegram_service.client = AsyncMock()
     telegram_service.client.is_user_authorized.return_value = True
     telegram_service._is_initialized = True
-    
+
     # Create mock dialogs
     dialog1 = MagicMock()
     dialog1.entity = MagicMock(spec=types.User)
@@ -170,13 +174,15 @@ async def test_list_chats_filtering(telegram_service):
     assert result.data[0].id == 2
 
     # Test Type Filtering
-    result = await telegram_service.list_chats(ListChatsInput(type_filters=[ChatType.channel]))
+    result = await telegram_service.list_chats(
+        ListChatsInput(type_filters=[ChatType.channel])
+    )
     assert len(result.data) == 1
     assert result.data[0].type == ChatType.channel
 
     # Test include_archived=False (default)
     result = await telegram_service.list_chats(ListChatsInput())
-    assert len(result.data) == 2 # Alice and Tech News
+    assert len(result.data) == 2  # Alice and Tech News
     assert all(not d.is_archived for d in result.data)
 
     # Test include_archived=True
@@ -192,6 +198,7 @@ async def test_list_chats_filtering(telegram_service):
     assert len(result.data) == 1
     assert result.meta.has_more is False
 
+
 @pytest.mark.asyncio
 async def test_list_chats_error_handling(telegram_service):
     telegram_service.client = AsyncMock()
@@ -200,11 +207,17 @@ async def test_list_chats_error_handling(telegram_service):
 
     # Test FloodWaitError
     from telethon import errors
+
     class MockRequest:
         pass
-    telegram_service.client.get_dialogs.side_effect = errors.FloodWaitError(request=MockRequest(), capture=42)
 
-    with pytest.raises(ValueError, match="Telegram rate limit: try again in 42 seconds"):
+    telegram_service.client.get_dialogs.side_effect = errors.FloodWaitError(
+        request=MockRequest(), capture=42
+    )
+
+    with pytest.raises(
+        ValueError, match="Telegram rate limit: try again in 42 seconds"
+    ):
         await telegram_service.list_chats(ListChatsInput())
 
     # Test ValueError
@@ -214,7 +227,9 @@ async def test_list_chats_error_handling(telegram_service):
         await telegram_service.list_chats(ListChatsInput())
 
     # Test generic Exception
-    telegram_service.client.get_dialogs.side_effect = Exception("Test generic Exception")
+    telegram_service.client.get_dialogs.side_effect = Exception(
+        "Test generic Exception"
+    )
 
     with pytest.raises(ValueError, match="An unexpected error occurred"):
         await telegram_service.list_chats(ListChatsInput())

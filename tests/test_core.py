@@ -5,15 +5,17 @@ from telegram_mcp.core.logger import logger
 import time
 from unittest.mock import patch
 
+
 @pytest.mark.asyncio
 async def test_cache():
     await cache.set("test_key", "test_value", ttl=1)
     value = await cache.get("test_key")
     assert value == "test_value"
-    
+
     await cache.delete("test_key")
     value = await cache.get("test_key")
     assert value is None
+
 
 @pytest.mark.asyncio
 async def test_cache_expiry():
@@ -33,10 +35,12 @@ async def test_cache_expiry():
 
     await cache.clear()
 
+
 def test_logger():
     # Just verify it doesn't crash
     logger.info("Testing logger")
     assert True
+
 
 def test_is_suspicious_bypass():
     from telegram_mcp.core.file_utils import is_suspicious
@@ -66,6 +70,7 @@ def test_is_suspicious_bypass():
     assert suspicious is False
     assert ext == ".pdf"
 
+
 def test_is_suspicious_bypass_alternating():
     from telegram_mcp.core.file_utils import is_suspicious
 
@@ -89,6 +94,7 @@ def test_is_suspicious_leading_dot():
     suspicious, ext = is_suspicious(" .exe")
     assert suspicious is True
     assert ext == ".exe"
+
 
 def test_is_suspicious_control_char_bypass():
     from telegram_mcp.core.file_utils import is_suspicious
