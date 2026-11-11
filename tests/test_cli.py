@@ -100,7 +100,9 @@ async def test_logout_flow_not_authorized_deletes_local_session(tmp_path, monkey
 
 
 @pytest.mark.asyncio
-async def test_logout_flow_exception_fallback_deletes_local_session(tmp_path, monkeypatch):
+async def test_logout_flow_exception_fallback_deletes_local_session(
+    tmp_path, monkeypatch
+):
     from telegram_mcp.cli import _logout_flow
     from telegram_mcp.core.config import settings
 
@@ -125,7 +127,9 @@ async def test_logout_flow_exception_fallback_deletes_local_session(tmp_path, mo
 
 
 @pytest.mark.asyncio
-async def test_logout_flow_missing_credentials_deletes_local_only(tmp_path, monkeypatch):
+async def test_logout_flow_missing_credentials_deletes_local_only(
+    tmp_path, monkeypatch
+):
     from telegram_mcp.cli import _logout_flow
     from telegram_mcp.core.config import settings
 
@@ -184,6 +188,7 @@ def test_logout_command_runs_secure_flow_after_confirmation(monkeypatch):
 
     mock_run.assert_called_once_with(sentinel_flow)
 
+
 @pytest.mark.asyncio
 async def test_logout_flow_handles_rich_markup_injection(tmp_path, monkeypatch):
     from telegram_mcp.cli import _logout_flow
@@ -206,7 +211,50 @@ async def test_logout_flow_handles_rich_markup_injection(tmp_path, monkeypatch):
         try:
             await _logout_flow()
         except MarkupError:
-            pytest.fail("MarkupError was raised. Exception message was not properly escaped.")
+            pytest.fail(
+                "MarkupError was raised. Exception message was not properly escaped."
+            )
 
     mock_client.connect.assert_called_once()
     assert not session_file.exists()
+
+
+def test_status_command_handles_rich_markup_injection(monkeypatch):
+    from telegram_mcp.cli import status
+    from rich.errors import MarkupError
+
+    class MockMe:
+        first_name = "Test [/]"
+        username = "Test [/]"
+        id = 123
+
+    async def mock_get_me():
+        return MockMe()
+
+    monkeypatch.setattr("telegram_mcp.cli.telegram_service.get_me", mock_get_me)
+    monkeypatch.setattr("telegram_mcp.cli.telegram_service.stop", AsyncMock())
+
+    try:
+        # Since status() is a synchronous wrapper, run it directly
+        status()
+    except MarkupError:
+        pytest.fail(
+            "MarkupError was raised. Output variables were not properly escaped."
+        )
+
+
+def test_config_command_handles_rich_markup_injection(monkeypatch):
+    from telegram_mcp.cli import config
+    from telegram_mcp.core.config import settings
+    from rich.errors import MarkupError
+
+    monkeypatch.setattr(settings, "SESSION_NAME", "Session [/]")
+    monkeypatch.setattr(settings, "SERVER_NAME", "Server [/]")
+    monkeypatch.setattr(settings, "SERVER_VERSION", "Version [/]")
+
+    try:
+        config()
+    except MarkupError:
+        pytest.fail(
+            "MarkupError was raised. Configuration variables were not properly escaped."
+        )
